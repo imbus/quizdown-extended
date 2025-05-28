@@ -46,10 +46,12 @@
 
     // set global options
     onMount(async () => {
+        let buttonColor: string = quiz.config.buttonColor;
         let primaryColor: string = quiz.config.primaryColor;
         let secondaryColor: string = quiz.config.secondaryColor;
         let textColor: string = quiz.config.textColor;
 
+        node.style.setProperty('--quizdown-color-button', buttonColor);
         node.style.setProperty('--quizdown-color-primary', primaryColor);
         node.style.setProperty('--quizdown-color-secondary', secondaryColor);
         node.style.setProperty('--quizdown-color-text', textColor);

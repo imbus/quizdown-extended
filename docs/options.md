@@ -11,10 +11,11 @@ let config = {
     startOnLoad: true,          // detect and convert all div html elements with class quizdown
     shuffleAnswers: true,       // shuffle answers for each question
     shuffleQuestions: false,    // shuffle questions for each quiz
-    nQuestions: undefined       // display n questions at random, if shuffleQuestions is true
+    nQuestions: undefined,       // display n questions at random, if shuffleQuestions is true
     primaryColor: 'steelblue',  // primary CSS color
     secondaryColor: '#f2f2f2',  // secondary CSS color
     textColor: 'black',         // text color of some elements
+    buttunColor: 'white',       // The background color of the buttons
     locale: null,               // language of the user interface (auto-detect per default)
     enableRetry: true           // allow the user to resubmit answers
 };
@@ -48,6 +49,7 @@ Here is an example ([🚀 editor](https://bonartm.github.io/quizdown-live-editor
 primaryColor: '#FF851B'
 secondaryColor: '#DDDDDD'
 textColor: black
+buttonColor: white
 locale: de
 shuffleQuestions: true
 nQuestions: 2

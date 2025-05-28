@@ -1,6 +1,6 @@
 {
     "name": "quizdown-extended",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "description": "Markdown for generating interactive quiz apps in the browser. (With more functions)",
     "private": false,
     "type": "module",
@@ -57,7 +57,7 @@
         "tslib": "^2.0.0",
         "typescript": "^3.9.3"
     },
-    "repository": "https://github.com/cz-lucas/quizdown-js",
+    "repository": "https://github.com/cz-lucas/quizdown-extended",
     "main": "public/build/quizdown.js",
     "dependencies": {
         "@fortawesome/fontawesome-svg-core": "^1.2.35",

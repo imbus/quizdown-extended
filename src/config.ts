@@ -12,6 +12,7 @@ const toRename = {
     start_on_load: 'startOnLoad',
     shuffle_answers: 'shuffleAnswers',
     shuffle_questions: 'shuffleQuestions',
+    button_color: 'buttonColor',
     primary_color: 'primaryColor',
     secondary_color: 'secondaryColor',
     text_color: 'textColor',
