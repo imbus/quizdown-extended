@@ -1,4 +1,4 @@
-# quizdown [![npm version](https://badge.fury.io/js/quizdown.svg)](https://badge.fury.io/js/quizdown) [![Build](https://github.com/bonartm/quizdown-js/actions/workflows/build.yml/badge.svg)](https://github.com/bonartm/quizdown-js/actions/workflows/build.yml)
+# quizdown 
 
 > Markdownish syntax to instantly create simple interactive quiz apps for your static website.
 
@@ -24,18 +24,6 @@ quizdown is easy to setup and best used in combination with existing static site
 
 ## Stand-alone Example
 
-Add the library to your website and initialize with default options:
-
-```html
-<head>
-	...
-    <script 
-	src="https://cdn.jsdelivr.net/npm/quizdown@latest/public/build/quizdown.js">
-	</script>
-	<script>quizdown.init();</script>
-	...
-</head>
-```
 
 To keep the bundle size low, syntax highlighting and math rendering are implemented in separate extensions that can be loaded and registered manually if needed: 
 
@@ -81,7 +69,12 @@ Write questions within a `quizdown` class (edit in the [🚀quizdown editor](htt
 ...
 ```
 
-
+## Register a new language
+You can register a new language that is supported by highlight.js with 
+``` javascript
+// Parameters: name of the language, hljsDefineRobot-method
+quizdownHighlight.registerHljsLanguage("robot", hljsDefineRobot);
+```
 
 ## Contributing
 
