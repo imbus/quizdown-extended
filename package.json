@@ -1,7 +1,7 @@
 {
-    "name": "quizdown",
+    "name": "quizdown-extended",
     "version": "0.6.0",
-    "description": "Markdown for generating interactive quiz apps in the browser.",
+    "description": "Markdown for generating interactive quiz apps in the browser. (With more functions)",
     "private": false,
     "type": "module",
     "scripts": {
