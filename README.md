@@ -76,6 +76,13 @@ You can register a new language that is supported by highlight.js with
 quizdownHighlight.registerHljsLanguage("robot", hljsDefineRobot);
 ```
 
+## Set the theme for hljs
+You can change the highlight.js with
+``` javascript
+// Parameters: the path/url the the theme
+quizdownHighlight.setTheme("https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.css");
+```
+
 ## Contributing
 
 Pull requests and feature requests are welcome. For major changes, please open an issue first to discuss what you would like to change. I'm happy for any feedback on how to improve the code base. 
