@@ -33,9 +33,9 @@
     $: allVisited = quiz.allVisited;
 
     //let game = new Linear(quiz);
-    
+
     let enableRetry = quiz.config.enableRetry;
-    
+
     registerLanguages(quiz.config.locale);
     registerIcons();
 
@@ -60,12 +60,12 @@
 <div class="quizdown-content" bind:this="{node}">
     <Card>
         <ProgressBar value="{$index}" max="{quiz.questions.length - 1}" />
-        <Loading update="{reloaded}" ms="{800}" minHeight="{minHeight}">
+        <Loading update="{reloaded}" ms="{800}" {minHeight}>
             <Container>
-                <SmoothResize minHeight="{minHeight}">
+                <SmoothResize {minHeight}>
                     <Animated update="{$index}">
                         {#if $onResults}
-                            <ResultsView quiz="{quiz}" />
+                            <ResultsView {quiz} />
                         {:else}
                             <QuestionView
                                 question="{$question}"
@@ -80,6 +80,7 @@
 
                 <Row>
                     <Button
+                        btnClass="quizControlButton hintButton"
                         slot="left"
                         title="{$_('hint')}"
                         disabled="{!$question.hint || $showHint || $onResults}"
@@ -88,6 +89,7 @@
                     >
                     <svelte:fragment slot="center">
                         <Button
+                            btnClass="quizControlButton previousButton"
                             title="{$_('previous')}"
                             disabled="{$onFirst || $onResults || $isEvaluated}"
                             buttonAction="{quiz.previous}"
@@ -95,6 +97,7 @@
                         >
 
                         <Button
+                            btnClass="quizControlButton nextButton"
                             disabled="{$onLast || $onResults || $isEvaluated}"
                             buttonAction="{quiz.next}"
                             title="{$_('next')}"
@@ -104,16 +107,15 @@
                         {#if $onLast || $allVisited}
                             <div in:fly="{{ x: 200, duration: 500 }}">
                                 <Button
+                                    btnClass="quizControlButton checkResultsButton"
                                     disabled="{!($onLast || $allVisited) ||
                                         $onResults}"
                                     title="{$_('evaluate')}"
                                     buttonAction="{() =>
                                         quiz.jump(quiz.questions.length)}"
-                                    ><Icon
-                                        name="check-double"
-                                        size="lg"
-                                    /></Button
                                 >
+                                    <Icon name="check-double" size="lg" />
+                                </Button>
                             </div>
                         {/if}
                     </svelte:fragment>
@@ -125,7 +127,9 @@
                                 buttonAction="{() => {
                                     reloaded = !reloaded;
                                     quiz.reset();
-                                }}"><Icon name="redo" /></Button
+                                }}"
+                                btnClass="quizControlButton retryButton"
+                                ><Icon name="redo" /></Button
                             >
                         {/if}
                     </svelte:fragment>
@@ -169,5 +173,9 @@
         padding: 1rem;
         max-width: 900px;
         margin: auto;
+    }
+
+    .quizControlButton {
+        color: blue;
     }
 </style>

@@ -11,6 +11,7 @@
                     type="checkbox"
                     bind:group="{question.selected}"
                     value="{i}"
+                    class="answerInput"
                 />
                 <span>{@html answer.html}</span>
             </label>
@@ -22,6 +23,7 @@
                     type="radio"
                     bind:group="{question.selected[0]}"
                     value="{i}"
+                    class="answerInput"
                 />
                 <span>{@html answer.html}</span>
             </label>
