@@ -31,6 +31,7 @@ function highlighter(code, language) {
 
 interface QuizdownHighlightExtension extends QuizdownExtension {
     registerHljsLanguage(name: string, lang: (hljs: object) => any);
+    setTheme(theme: string);
 }
 
 let quizdownHighlight: QuizdownHighlightExtension = {
@@ -55,6 +56,39 @@ let quizdownHighlight: QuizdownHighlightExtension = {
             console.error(name + " can't be registerd");
         }
     },
+    /*
+    * Sets the theme.
+    * @param theme - The path or URL (e.g. jsdelivr to the theme)
+    */
+    async setTheme(theme) {
+        if (!theme.endsWith(".css")) {
+            console.error("Theme is not a css file");
+            return;
+        }
+
+        // Find the shadow host element (change the selector as needed)
+        const shadowHost = document.querySelector('.quizdown');
+        if (!shadowHost || !shadowHost.shadowRoot) {
+            console.error("Shadow root not found");
+            return;
+        }
+        const shadowRoot = shadowHost.shadowRoot;
+
+        // Remove previous theme style (if any)
+        const oldStyle = shadowRoot.querySelector('style[data-hljs-theme]');
+
+        if (oldStyle) oldStyle.remove();
+
+        try {
+            const cssText = await fetch(theme).then(res => res.text());
+            const styleTag = document.createElement('style');
+            styleTag.setAttribute('data-hljs-theme', theme);
+            styleTag.textContent = cssText;
+            shadowRoot.appendChild(styleTag);
+        } catch (e) {
+            console.error("Failed to fetch or apply theme CSS:", e);
+        }
+    }
 };
 
 export default quizdownHighlight;
