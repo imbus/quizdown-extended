@@ -21,6 +21,7 @@
     button {
         background-color: white;
         color: var(--quizdown-color-text);
+        background-color: var(--quizdown-color-button);
         padding: 0.5rem 1rem;
         border-radius: 4px;
         border: 1px solid transparent;
