@@ -2,9 +2,10 @@
     export let buttonAction = () => alert('Life has never Svelte better');
     export let disabled = false;
     export let title = '';
+    export let btnClass = '';
 </script>
 
-<button title="{title}" disabled="{disabled}" on:click="{buttonAction}">
+<button title="{title}" disabled="{disabled}" class="{btnClass}" on:click="{buttonAction}">
     <slot />
 </button>
 
