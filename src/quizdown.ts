@@ -41,6 +41,13 @@ function createApp(rawQuizdown: string, node: Element, config: Config): App {
                 quiz: quiz,
             },
         });
+        // Listen for quiz-stats event and re-emit to parent
+        root.addEventListener('quiz-stats', (e: Event) => {
+            const customEvent = e as CustomEvent;
+            // Forward to parent window
+            const statsEvent = new CustomEvent('quizdown-stats', { detail: customEvent.detail });
+            node.dispatchEvent(statsEvent);
+        });
         return app;
     } catch (e) {
         root.innerHTML = `${e}. App could not render. Please check your quizdown syntax.`;

@@ -269,6 +269,7 @@ export class Quiz {
     }
 
     getStats(): object {
+        console.log("getting stats...");
         const numberOfQuestions = this.questions.length;
         let visited = 0;
         let solved = 0;

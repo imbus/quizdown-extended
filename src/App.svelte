@@ -20,8 +20,10 @@
     import Container from './components/Container.svelte';
     import Loading from './components/Loading.svelte';
     // import Modal from './components/Modal.svelte';
+    import { createEventDispatcher } from 'svelte';
 
     export let quiz: Quiz;
+    const dispatch = createEventDispatcher();
     // https://github.com/sveltejs/svelte/issues/4079
     $: question = quiz.active;
     $: showHint = $question.showHint;
@@ -57,6 +59,22 @@
         node.style.setProperty('--quizdown-color-text', textColor);
         node.style.minHeight = `${minHeight}px`;
     });
+
+    $: if ($onResults && $isEvaluated) {
+        dispatchStats();
+    }
+
+    const dispatchStats = () => {
+        const event = new CustomEvent('quizdown-stats', {
+            detail: quiz.getStats(),
+            bubbles: true,
+            composed: true, // allows it to bubble across the shadow DOM boundary
+        });
+
+        if (node) {
+            node.dispatchEvent(event);
+        }
+    };
 </script>
 
 <div class="quizdown-content" bind:this="{node}">

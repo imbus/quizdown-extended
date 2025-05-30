@@ -48,8 +48,6 @@ let quizdownHighlight: QuizdownHighlightExtension = {
     *               This defines the syntax highlighting rules for the custom language.
     */
     registerHljsLanguage: function (name: string, lang: (hljs: object) => any) {
-        console.log(name);
-        console.log(lang);
         if (typeof lang === "function") {
             hljs.registerLanguage(name, lang);
         } else {
