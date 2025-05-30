@@ -10,6 +10,7 @@ export interface Quizdown {
     parseQuizdown(rawQuizdown: string, config: Config): Quiz;
     init(config: object): void;
     getMarkedParser(): typeof marked;
+    listenForStats(quizdownNode: HTMLElement, eventHandler: Function): void;
 }
 
 export interface QuizdownExtension {
@@ -72,6 +73,20 @@ function init(config: object = {}): void {
     }
 }
 
+/**
+ * Attaches an event listener to the given quizdownNode that listens for the 'quizdown-stats' event.
+ *
+ * When the 'quizdown-stats' event is emitted, the provided eventHandler is called with the event's detail.
+ *
+ * @param quizdownNode - The HTML element that will emit the quizdown statistics event.
+ * @param eventHandler - The callback function that handles the statistics data from the event detail.
+ */
+function listenForStats(quizdownNode: HTMLElement, eventHandler: Function): void {
+    quizdownNode.addEventListener('quizdown-stats', (event) => {
+        eventHandler((event as any).detail);
+    });
+}
+
 function getMarkedParser(): typeof marked {
     return marked;
 }
@@ -82,6 +97,7 @@ let quizdown: Quizdown = {
     parseQuizdown,
     createApp,
     getMarkedParser,
+    listenForStats,
 };
 
 export default quizdown;

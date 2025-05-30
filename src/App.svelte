@@ -58,6 +58,7 @@
         node.style.setProperty('--quizdown-color-secondary', secondaryColor);
         node.style.setProperty('--quizdown-color-text', textColor);
         node.style.minHeight = `${minHeight}px`;
+        dispatchStats();
     });
 
     $: if ($onResults && $isEvaluated) {
