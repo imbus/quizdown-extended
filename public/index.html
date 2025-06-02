@@ -30,7 +30,6 @@
 	<div class="container" style="margin: auto; max-width:600px;">
 		<h1>Quizdown Demo Page</h1>
 
-
 		<div class="quizdown">
 
 			---
@@ -193,7 +192,24 @@
 			- [ ] `C3PO`
 
 		</div>
+		<div id="stats">
+			<p id="numberOfQuestions"></p>
+			<p id="visited"></p>
+			<p id="solved"></p>
+			<p id="right"></p>
+			<p id="wrong"></p>
+		</div>
 	</div>
+	<script>
+		const shadowHost = document.querySelector('.quizdown'); // host element
+		quizdown.listenForStats(shadowHost, (event) => {
+			document.getElementById('numberOfQuestions').innerText = "# of questions: " + event.numberOfQuestions;
+			document.getElementById('visited').innerText = "visited: " + event.visited;
+			document.getElementById('solved').innerText = "solved: " + event.solved;
+			document.getElementById('right').innerText = "right: " + event.right;
+			document.getElementById('wrong').innerText = "wrong: " + event.wrong;
+		});
+	</script>
 </body>
 
 </html>

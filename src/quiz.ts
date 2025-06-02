@@ -1,6 +1,7 @@
 import { writable, get, Writable } from 'svelte/store';
 import autoBind from 'auto-bind';
 import type { Config } from './config.js';
+import quizdown from './quizdown.js';
 
 function isEqual(a1: Array<number>, a2: Array<number>): boolean {
     return JSON.stringify(a1) === JSON.stringify(a2);
@@ -264,5 +265,35 @@ export class Quiz {
         }
         this.isEvaluated.set(true);
         return points;
+    }
+
+    getStats(): object {
+        const numberOfQuestions = this.questions.length;
+        let visited = 0;
+        let solved = 0;
+        let wrong = 0;
+        let right = 0;
+
+        this.questions.forEach((question) => {
+            if (question.visited === true) {
+                visited++;
+            }
+            if (question.solved === true) {
+                solved++;
+            }
+            if (question.isCorrect() === true) {
+                right++;
+            } else {
+                wrong++;
+            }
+        });
+
+        return {
+            numberOfQuestions,
+            visited,
+            solved,
+            wrong,
+            right,
+        }
     }
 }
