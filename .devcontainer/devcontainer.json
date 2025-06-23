@@ -1,0 +1,16 @@
+// See https://containers.dev/implementors/json_reference/ for configuration reference
+{
+	"name": "Quizdown-extended",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+"remoteUser": "node",
+"postCreateCommand": "cd /workspaces/quizdown-extended ; npm install",
+"customizations": {
+	"vscode": {
+		"extensions": [
+			"svelte.svelte-vscode"
+		]
+	}
+}
+}
