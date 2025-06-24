@@ -4,6 +4,8 @@ import { Config } from './config.js';
 import marked from './customizedMarked.js';
 import type { Quiz } from './quiz';
 
+import './libs.css';
+
 export interface Quizdown {
     register(extension: QuizdownExtension): Quizdown;
     createApp(rawQuizdown: string, node: Element, config: Config): App;

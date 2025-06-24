@@ -11,6 +11,7 @@ import replace from '@rollup/plugin-replace';
 import postcss from 'rollup-plugin-postcss';
 import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
+import path from 'path';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -50,11 +51,18 @@ function make_config(input, output, name, extra_plugins) {
             dedupe: ['svelte'],
         }),
         commonjs(),
-        // Add postcss plugin to handle CSS files
         postcss({
             extensions: ['.css'],
+            inject: true,  // Inject CSS into JS
+            extract: false, // Don't extract to separate files
             minimize: production,
-            extract: output + '/bundle.css'
+            // This is the key part - provide a resolver function for @imports
+            to: path.resolve(process.cwd(), `public/build/${name}.css`),
+            autoModules: true,
+            onImport: (id) => {
+                // Log for debugging
+                console.log(`PostCSS import: ${id}`);
+            }
         }),
         typescript({
             sourceMap: !production,
@@ -82,18 +90,13 @@ let svelte_plugins = [
     svelte({
         preprocess: sveltePreprocess({
             sourceMap: !production,
-            // Add postcss for processing styles in svelte components
-            postcss: true,
         }),
         compilerOptions: {
-            // enable run-time checks when not in production
             dev: !production,
         },
-        // Extract component CSS into separate files
-        emitCss: true,
+        emitCss: false, // Keep CSS in components
     }),
     json({ compact: true }),
-    // Replace version injector with @rollup/plugin-replace
     replace({
         preventAssignment: true,
         values: {
@@ -102,7 +105,6 @@ let svelte_plugins = [
             'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development')
         }
     }),
-    //live preview in dev mode
     !production && serve(),
     !production && livereload('public'),
 ].filter(Boolean);
