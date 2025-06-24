@@ -2,14 +2,21 @@ import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
 import analyze from 'rollup-plugin-analyzer';
-import versionInjector from 'rollup-plugin-version-injector';
 import json from '@rollup/plugin-json';
+import replace from '@rollup/plugin-replace';
+import postcss from 'rollup-plugin-postcss';
+import { spawn } from 'child_process';
+import { readFileSync } from 'fs';
 
 const production = !process.env.ROLLUP_WATCH;
+
+// Get package version from package.json
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
+const version = pkg.version;
 
 function serve() {
     let server;
@@ -21,7 +28,7 @@ function serve() {
     return {
         writeBundle() {
             if (server) return;
-            server = require('child_process').spawn(
+            server = spawn(
                 'npm',
                 ['run', 'start', '--', '--dev'],
                 {
@@ -39,15 +46,20 @@ function serve() {
 function make_config(input, output, name, extra_plugins) {
     let default_plugins = [
         resolve({
-            browser: false,
+            browser: true,
             dedupe: ['svelte'],
         }),
         commonjs(),
+        // Add postcss plugin to handle CSS files
+        postcss({
+            extensions: ['.css'],
+            minimize: production,
+            extract: output + '/bundle.css'
+        }),
         typescript({
             sourceMap: !production,
             inlineSources: !production,
         }),
-        //minifying and bundle analysis in production mode
         production && terser(),
         production && analyze({ summaryOnly: true }),
     ];
@@ -59,7 +71,7 @@ function make_config(input, output, name, extra_plugins) {
             name: name,
             dir: output,
         },
-        plugins: extra_plugins.concat(default_plugins),
+        plugins: [...extra_plugins, ...default_plugins.filter(Boolean)],
         watch: {
             clearScreen: false,
         },
@@ -70,19 +82,30 @@ let svelte_plugins = [
     svelte({
         preprocess: sveltePreprocess({
             sourceMap: !production,
+            // Add postcss for processing styles in svelte components
+            postcss: true,
         }),
-        emitCss: false,
         compilerOptions: {
             // enable run-time checks when not in production
             dev: !production,
         },
+        // Extract component CSS into separate files
+        emitCss: true,
     }),
     json({ compact: true }),
-    versionInjector(),
+    // Replace version injector with @rollup/plugin-replace
+    replace({
+        preventAssignment: true,
+        values: {
+            'process.env.VERSION': JSON.stringify(version),
+            'process.env.BUILD_DATE': JSON.stringify(new Date().toISOString()),
+            'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development')
+        }
+    }),
     //live preview in dev mode
     !production && serve(),
     !production && livereload('public'),
-];
+].filter(Boolean);
 
 export default [
     make_config(

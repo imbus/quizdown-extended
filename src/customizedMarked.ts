@@ -1,4 +1,4 @@
-import marked from 'marked';
+import { marked } from 'marked';
 import { parse as parseYaml } from 'yaml';
 
 // customize tokenizer to include yaml like header blocks
@@ -44,4 +44,6 @@ marked.use({
     tokenizer: tokenizer,
 });
 
+// Since we're using the marked object directly, export it as is
+export { marked };
 export default marked;
