@@ -12,6 +12,8 @@ import postcss from 'rollup-plugin-postcss';
 import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
 import path from 'path';
+// Add this import for version injector
+import versionInjector from 'rollup-plugin-version-injector';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -46,6 +48,20 @@ function serve() {
 
 function make_config(input, output, name, extra_plugins) {
     let default_plugins = [
+        // Add version injector plugin BEFORE svelte processing
+        versionInjector({
+            // The pattern is already in the correct format [VI]v{version}[/VI]
+            injectInComments: {
+                fileRegexp: /\.(js|html|svelte)$/,
+                tag: 'Version'
+            },
+            injectInTags: {
+                fileRegexp: /\.(js|html|svelte)$/,
+                tagId: 'VI',
+                dateFormat: 'mmmm d, yyyy HH:MM:ss'
+            },
+            logLevel: 'info'
+        }),
         resolve({
             browser: true,
             dedupe: ['svelte'],
@@ -53,23 +69,9 @@ function make_config(input, output, name, extra_plugins) {
         commonjs(),
         postcss({
             extensions: ['.css'],
-            inject: true,  // Inject CSS into JS
-            extract: false, // Don't extract to separate files
-            minimize: production,
-            // Using a simple configuration without special handling for FontAwesome
-            use: [],
-            // Set baseDirectories to include node_modules for proper resolution
-            loaders: [
-                {
-                    name: 'css',
-                    test: /\.css$/,
-                    options: {
-                        // This helps with path resolution for imports
-                        importLoaders: 1,
-                        modules: false
-                    }
-                }
-            ]
+            inject: true,
+            extract: false,
+            minimize: production
         }),
         typescript({
             sourceMap: !production,
@@ -101,7 +103,7 @@ let svelte_plugins = [
         compilerOptions: {
             dev: !production,
         },
-        emitCss: false, // Keep CSS in components
+        emitCss: false,
     }),
     json({ compact: true }),
     replace({

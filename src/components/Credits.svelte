@@ -1,6 +1,6 @@
 <div class="credits">
     <!-- inject the version number using rollup-plugin-version-injector -->
-    <a href="https://github.com/cz-lucas/quizdown-extended"
+    <a href="https://github.com/imbus/quizdown-extended"
         >quizdown-extended {'[VI]v{version}[/VI]'}</a
     >
 </div>
