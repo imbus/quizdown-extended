@@ -18,7 +18,7 @@
             bind:this="{node}"
             style="min-height:{minHeight}px;"
         >
-            ↻ Todo replace with better loading animation
+            <div class="loader"></div>
         </div>
     {:then resolved}
         <slot />
@@ -33,5 +33,24 @@
         justify-content: center;
         align-items: center;
         text-align: center;
+    }
+
+    .loader {
+        width: 50px;
+        height: 50px;
+        border: 5px solid var(--quizdown-color-secondary); /*  background */
+        border-top: 5px solid var(--quizdown-color-primary); /* foreground */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 100px auto; /* Center on page */
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
     }
 </style>
