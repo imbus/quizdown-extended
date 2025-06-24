@@ -6,7 +6,6 @@
     let emojis = ['❌', '✅'];
     import { _ } from 'svelte-i18n';
     import { fade } from 'svelte/transition';
-    import Icon from './Icon.svelte';
     import Loading from './Loading.svelte';
     import { get } from 'svelte/store';
 
@@ -39,7 +38,7 @@
 <Loading ms="{waitTime}" minHeight="{150}">
     <div in:fade="{{ duration: 1000 }}">
         <h1>
-            <Icon name="check-double" />
+            ✔
             {format(points)}/{format(quiz.questions.length)}
         </h1>
 

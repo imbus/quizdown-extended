@@ -13,8 +13,6 @@
     import ResultsView from './components/ResultsView.svelte';
     // import { Linear, CheckFirst } from './progressModes.js';
     import Animated from './components/Animated.svelte';
-    import registerIcons from './registerIcons.js';
-    import Icon from './components/Icon.svelte';
     import Hint from './components/Hint.svelte';
     import { fly } from 'svelte/transition';
     import Container from './components/Container.svelte';
@@ -39,7 +37,6 @@
     let enableRetry = quiz.config.enableRetry;
 
     registerLanguages(quiz.config.locale);
-    registerIcons();
 
     let node: HTMLElement;
     let minHeight = 150;
@@ -106,7 +103,9 @@
                         title="{$_('hint')}"
                         disabled="{!$question.hint || $showHint || $onResults}"
                         buttonAction="{$question.enableHint}"
-                        ><Icon name="lightbulb" solid="{false}" /></Button
+                        >
+                        💡
+                        </Button
                     >
                     <svelte:fragment slot="center">
                         <Button
@@ -114,7 +113,7 @@
                             title="{$_('previous')}"
                             disabled="{$onFirst || $onResults || $isEvaluated}"
                             buttonAction="{quiz.previous}"
-                            ><Icon name="arrow-left" size="lg" /></Button
+                            >←</Button
                         >
 
                         <Button
@@ -122,7 +121,7 @@
                             disabled="{$onLast || $onResults || $isEvaluated}"
                             buttonAction="{quiz.next}"
                             title="{$_('next')}"
-                            ><Icon name="arrow-right" size="lg" /></Button
+                            >→</Button
                         >
 
                         {#if $onLast || $allVisited}
@@ -135,7 +134,7 @@
                                     buttonAction="{() =>
                                         quiz.jump(quiz.questions.length)}"
                                 >
-                                    <Icon name="check-double" size="lg" />
+                                    ✔
                                 </Button>
                             </div>
                         {/if}
@@ -150,7 +149,9 @@
                                     quiz.reset();
                                 }}"
                                 btnClass="quizControlButton retryButton"
-                                ><Icon name="redo" /></Button
+                                >
+                                &#10227;
+                                </Button
                             >
                         {/if}
                     </svelte:fragment>
@@ -166,7 +167,6 @@
 <style type="text/scss" global>
     @import 'highlight.js/styles/github';
     @import 'katex/dist/katex';
-    @import '@fortawesome/fontawesome-svg-core/styles';
 
     img {
         max-height: 400px;

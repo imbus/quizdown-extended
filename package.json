@@ -32,7 +32,6 @@
     "author": "cz-lucas",
     "license": "MIT",
     "devDependencies": {
-        "@fortawesome/free-regular-svg-icons": "^6.4.2",
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-json": "^6.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
@@ -64,8 +63,6 @@
     "repository": "https://github.com/imbus/quizdown-extended",
     "main": "public/build/quizdown.js",
     "dependencies": {
-        "@fortawesome/fontawesome-svg-core": "^6.4.2",
-        "@fortawesome/free-solid-svg-icons": "^6.4.2",
         "auto-bind": "^5.0.1",
         "dompurify": "^3.0.6",
         "highlight.js": "^11.9.0",

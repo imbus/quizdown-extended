@@ -56,13 +56,20 @@ function make_config(input, output, name, extra_plugins) {
             inject: true,  // Inject CSS into JS
             extract: false, // Don't extract to separate files
             minimize: production,
-            // This is the key part - provide a resolver function for @imports
-            to: path.resolve(process.cwd(), `public/build/${name}.css`),
-            autoModules: true,
-            onImport: (id) => {
-                // Log for debugging
-                console.log(`PostCSS import: ${id}`);
-            }
+            // Using a simple configuration without special handling for FontAwesome
+            use: [],
+            // Set baseDirectories to include node_modules for proper resolution
+            loaders: [
+                {
+                    name: 'css',
+                    test: /\.css$/,
+                    options: {
+                        // This helps with path resolution for imports
+                        importLoaders: 1,
+                        modules: false
+                    }
+                }
+            ]
         }),
         typescript({
             sourceMap: !production,

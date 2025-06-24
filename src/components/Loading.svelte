@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Icon from './Icon.svelte';
     export let ms: number;
     export let minHeight = 0;
 
@@ -19,7 +18,7 @@
             bind:this="{node}"
             style="min-height:{minHeight}px;"
         >
-            <Icon name="circle-notch" spin="{true}" size="2x" />
+            ↻ Todo replace with better loading animation
         </div>
     {:then resolved}
         <slot />
