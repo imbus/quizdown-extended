@@ -1,11 +1,13 @@
 {
-    "extends": "@tsconfig/svelte/tsconfig.json",
-    "allowSyntheticDefaultImports": true,
-    "compilerOptions": {
-        "resolveJsonModule": true,
-        "types": ["marked", "svelte"]
-    },
-
-    "include": ["src/**/*"],
-    "exclude": ["node_modules/*", "__sapper__/*", "public/*", "docs/*"]
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"]
 }

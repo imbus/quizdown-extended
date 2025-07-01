@@ -164,9 +164,9 @@
 
 <!-- global styles applied to all elements in the app -->
 <style type="text/scss" global>
-    @import 'highlight.js/styles/github';
+    /*@import 'highlight.js/styles/github';
     @import 'katex/dist/katex';
-    @import '@fortawesome/fontawesome-svg-core/styles';
+    @import '@fortawesome/fontawesome-svg-core/styles';*/
 
     img {
         max-height: 400px;

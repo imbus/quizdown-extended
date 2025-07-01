@@ -1,3 +1,4 @@
+import { mount } from 'svelte';
 import App from './App.svelte';
 import parseQuizdown from './parser.js';
 import { Config } from './config.js';
@@ -34,7 +35,8 @@ function createApp(rawQuizdown: string, node: Element, config: Config): App {
     }
     try {
         let quiz = parseQuizdown(rawQuizdown, config);
-        let app = new App({
+
+        let app = mount(App, {
             // https://github.com/sveltejs/svelte/pull/5870
             target: root,
             intro: false,
