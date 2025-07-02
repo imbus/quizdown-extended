@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { run } from 'svelte/legacy';
+
     import type { Quiz } from './quiz';
     import ProgressBar from './components/ProgressBar.svelte';
     import { onMount } from 'svelte';
@@ -22,17 +24,12 @@
     // import Modal from './components/Modal.svelte';
     import { createEventDispatcher } from 'svelte';
 
-    export let quiz: Quiz;
+    interface Props {
+        quiz: Quiz;
+    }
+
+    let { quiz }: Props = $props();
     const dispatch = createEventDispatcher();
-    // https://github.com/sveltejs/svelte/issues/4079
-    $: question = quiz.active;
-    $: showHint = $question.showHint;
-    $: index = quiz.index;
-    $: onLast = quiz.onLast;
-    $: onFirst = quiz.onFirst;
-    $: onResults = quiz.onResults;
-    $: isEvaluated = quiz.isEvaluated;
-    $: allVisited = quiz.allVisited;
 
     //let game = new Linear(quiz);
 
@@ -41,9 +38,9 @@
     registerLanguages(quiz.config.locale);
     registerIcons();
 
-    let node: HTMLElement;
+    let node: HTMLElement = $state();
     let minHeight = 150;
-    let reloaded = false;
+    let reloaded = $state(false);
     // let showModal = false;
 
     // set global options
@@ -61,9 +58,6 @@
         dispatchStats();
     });
 
-    $: if ($onResults && $isEvaluated) {
-        dispatchStats();
-    }
 
     const dispatchStats = () => {
         const event = new CustomEvent('quizdown-stats', {
@@ -76,6 +70,20 @@
             node.dispatchEvent(event);
         }
     };
+    // https://github.com/sveltejs/svelte/issues/4079
+    let question = $derived(quiz.active);
+    let showHint = $derived($question.showHint);
+    let index = $derived(quiz.index);
+    let onLast = $derived(quiz.onLast);
+    let onFirst = $derived(quiz.onFirst);
+    let onResults = $derived(quiz.onResults);
+    let isEvaluated = $derived(quiz.isEvaluated);
+    let allVisited = $derived(quiz.allVisited);
+    run(() => {
+        if ($onResults && $isEvaluated) {
+            dispatchStats();
+        }
+    });
 </script>
 
 <div class="quizdown-content" bind:this="{node}">
@@ -100,60 +108,68 @@
                 <!-- <Modal show="{showModal}">Are you sure?</Modal> -->
 
                 <Row>
-                    <Button
-                        btnClass="quizControlButton hintButton"
-                        slot="left"
-                        title="{$_('hint')}"
-                        disabled="{!$question.hint || $showHint || $onResults}"
-                        buttonAction="{$question.enableHint}"
-                        ><Icon name="lightbulb" solid="{false}" /></Button
-                    >
-                    <svelte:fragment slot="center">
-                        <Button
-                            btnClass="quizControlButton previousButton"
-                            title="{$_('previous')}"
-                            disabled="{$onFirst || $onResults || $isEvaluated}"
-                            buttonAction="{quiz.previous}"
-                            ><Icon name="arrow-left" size="lg" /></Button
+                    {#snippet left()}
+                                        <Button
+                            btnClass="quizControlButton hintButton"
+                            
+                            title="{$_('hint')}"
+                            disabled="{!$question.hint || $showHint || $onResults}"
+                            buttonAction="{$question.enableHint}"
+                            ><Icon name="lightbulb" solid="{false}" /></Button
                         >
-
-                        <Button
-                            btnClass="quizControlButton nextButton"
-                            disabled="{$onLast || $onResults || $isEvaluated}"
-                            buttonAction="{quiz.next}"
-                            title="{$_('next')}"
-                            ><Icon name="arrow-right" size="lg" /></Button
-                        >
-
-                        {#if $onLast || $allVisited}
-                            <div in:fly="{{ x: 200, duration: 500 }}">
-                                <Button
-                                    btnClass="quizControlButton checkResultsButton"
-                                    disabled="{!($onLast || $allVisited) ||
-                                        $onResults}"
-                                    title="{$_('evaluate')}"
-                                    buttonAction="{() =>
-                                        quiz.jump(quiz.questions.length)}"
-                                >
-                                    <Icon name="check-double" size="lg" />
-                                </Button>
-                            </div>
-                        {/if}
-                    </svelte:fragment>
-                    <svelte:fragment slot="right">
-                        {#if enableRetry}
+                                    {/snippet}
+                    {#snippet center()}
+                                    
                             <Button
-                                slot="right"
-                                title="{$_('reset')}"
-                                buttonAction="{() => {
-                                    reloaded = !reloaded;
-                                    quiz.reset();
-                                }}"
-                                btnClass="quizControlButton retryButton"
-                                ><Icon name="redo" /></Button
+                                btnClass="quizControlButton previousButton"
+                                title="{$_('previous')}"
+                                disabled="{$onFirst || $onResults || $isEvaluated}"
+                                buttonAction="{quiz.previous}"
+                                ><Icon name="arrow-left" size="lg" /></Button
                             >
-                        {/if}
-                    </svelte:fragment>
+
+                            <Button
+                                btnClass="quizControlButton nextButton"
+                                disabled="{$onLast || $onResults || $isEvaluated}"
+                                buttonAction="{quiz.next}"
+                                title="{$_('next')}"
+                                ><Icon name="arrow-right" size="lg" /></Button
+                            >
+
+                            {#if $onLast || $allVisited}
+                                <div in:fly="{{ x: 200, duration: 500 }}">
+                                    <Button
+                                        btnClass="quizControlButton checkResultsButton"
+                                        disabled="{!($onLast || $allVisited) ||
+                                            $onResults}"
+                                        title="{$_('evaluate')}"
+                                        buttonAction="{() =>
+                                            quiz.jump(quiz.questions.length)}"
+                                    >
+                                        <Icon name="check-double" size="lg" />
+                                    </Button>
+                                </div>
+                            {/if}
+                        
+                                    {/snippet}
+                    {#snippet right()}
+                                    
+                            {#if enableRetry}
+                                {#snippet right()}
+                                                        <Button
+                                        
+                                        title="{$_('reset')}"
+                                        buttonAction="{() => {
+                                            reloaded = !reloaded;
+                                            quiz.reset();
+                                        }}"
+                                        btnClass="quizControlButton retryButton"
+                                        ><Icon name="redo" /></Button
+                                    >
+                                                    {/snippet}
+                            {/if}
+                        
+                                    {/snippet}
                 </Row>
 
                 <Credits />
@@ -163,7 +179,7 @@
 </div>
 
 <!-- global styles applied to all elements in the app -->
-<style type="text/scss" global>
+<style global lang="scss" >
     /*@import 'highlight.js/styles/github';
     @import 'katex/dist/katex';
     @import '@fortawesome/fontawesome-svg-core/styles';*/

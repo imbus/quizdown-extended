@@ -1,11 +1,21 @@
 <script lang="ts">
     import Icon from './Icon.svelte';
-    export let ms: number;
-    export let minHeight = 0;
 
-    export let update = false;
+    interface Props {
+        ms: number;
+        minHeight?: number;
+        update?: boolean;
+        children?: import('svelte').Snippet;
+    }
 
-    let node: HTMLElement;
+    let {
+        ms,
+        minHeight = 0,
+        update = false,
+        children
+    }: Props = $props();
+
+    let node: HTMLElement = $state();
 
     async function wait(ms: number) {
         await new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,7 +32,7 @@
             <Icon name="circle-notch" spin="{true}" size="2x" />
         </div>
     {:then resolved}
-        <slot />
+        {@render children?.()}
     {/await}
 {/key}
 

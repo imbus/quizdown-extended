@@ -1,12 +1,23 @@
 <script lang="ts">
-    export let buttonAction = () => alert('Life has never Svelte better');
-    export let disabled = false;
-    export let title = '';
-    export let btnClass = '';
+    interface Props {
+        buttonAction?: any;
+        disabled?: boolean;
+        title?: string;
+        btnClass?: string;
+        children?: import('svelte').Snippet;
+    }
+
+    let {
+        buttonAction = () => alert('Life has never Svelte better'),
+        disabled = false,
+        title = '',
+        btnClass = '',
+        children
+    }: Props = $props();
 </script>
 
-<button title="{title}" disabled="{disabled}" class="{btnClass}" on:click="{buttonAction}">
-    <slot />
+<button title="{title}" disabled="{disabled}" class="{btnClass}" onclick={buttonAction}>
+    {@render children?.()}
 </button>
 
 <style>

@@ -1,7 +1,11 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
-    export let show: Boolean;
-    export let hint: string;
+    interface Props {
+        show: Boolean;
+        hint: string;
+    }
+
+    let { show, hint }: Props = $props();
 </script>
 
 {#if show}

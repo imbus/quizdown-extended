@@ -1,12 +1,22 @@
+<script lang="ts">
+    interface Props {
+        left?: import('svelte').Snippet;
+        center?: import('svelte').Snippet<[any]>;
+        right?: import('svelte').Snippet;
+    }
+
+    let { left, center, right }: Props = $props();
+</script>
+
 <div class="row">
     <div class="left">
-        <slot name="left" />
+        {@render left?.()}
     </div>
     <div class="center">
-        <slot class="center" name="center" />
+        {@render center?.({ class: "center", })}
     </div>
     <div class="right">
-        <slot name="right" />
+        {@render right?.()}
     </div>
 </div>
 

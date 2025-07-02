@@ -1,6 +1,10 @@
 <script lang="ts">
     import type { BaseQuestion } from '../quiz';
-    export let question: BaseQuestion;
+    interface Props {
+        question: BaseQuestion;
+    }
+
+    let { question = $bindable() }: Props = $props();
 </script>
 
 <fieldset>

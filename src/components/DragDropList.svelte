@@ -1,19 +1,25 @@
+<!-- @migration-task Error while migrating Svelte code: Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
+https://svelte.dev/e/import_svelte_internal_forbidden -->
 <script lang="ts">
     //copied and adopted from https://github.com/jwlarocque/svelte-dragdroplist
     import { flip } from 'svelte/animate';
     import type { HtmlTag } from 'svelte/internal';
 
-    export let data = [];
-    export let removesItems = false;
+    interface Props {
+        data?: any;
+        removesItems?: boolean;
+    }
 
-    let ghost: HTMLElement;
-    let grabbed: HTMLElement;
+    let { data = $bindable([]), removesItems = false }: Props = $props();
+
+    let ghost: HTMLElement = $state();
+    let grabbed: HTMLElement = $state();
 
     let lastTarget;
 
-    let mouseY = 0; // pointer y coordinate within client
-    let offsetY = 0; // y distance from top of grabbed element to pointer
-    let layerY = 0; // distance from top of list to top of client
+    let mouseY = $state(0); // pointer y coordinate within client
+    let offsetY = $state(0); // y distance from top of grabbed element to pointer
+    let layerY = $state(0); // distance from top of list to top of client
 
     function grab(clientY: number, element: HTMLElement) {
         // modify grabbed element
@@ -98,26 +104,26 @@
     </div>
     <div
         class="list"
-        on:mousemove="{function (ev) {
+        onmousemove={function (ev) {
             ev.stopPropagation();
             drag(ev.clientY);
-        }}"
-        on:touchmove="{function (ev) {
+        }}
+        ontouchmove={function (ev) {
             ev.stopPropagation();
             drag(ev.touches[0].clientY);
-        }}"
-        on:mouseup="{function (ev) {
+        }}
+        onmouseup={function (ev) {
             ev.stopPropagation();
             release(ev);
-        }}"
-        on:mouseleave="{function (ev) {
+        }}
+        onmouseleave={function (ev) {
             ev.stopPropagation();
             release(ev);
-        }}"
-        on:touchend="{function (ev) {
+        }}
+        ontouchend={function (ev) {
             ev.stopPropagation();
             release(ev.touches[0]);
-        }}"
+        }}
     >
         {#each data as datum, i (datum.id ? datum.id : JSON.stringify(datum))}
             <div
@@ -130,30 +136,30 @@
                 data-index="{i}"
                 data-id="{datum.id ? datum.id : JSON.stringify(datum)}"
                 data-grabY="0"
-                on:mousedown="{function (ev) {
+                onmousedown={function (ev) {
                     grab(ev.clientY, this);
-                }}"
-                on:touchstart="{function (ev) {
+                }}
+                ontouchstart={function (ev) {
                     grab(ev.touches[0].clientY, this);
-                }}"
-                on:mouseenter="{function (ev) {
+                }}
+                onmouseenter={function (ev) {
                     ev.stopPropagation();
                     dragEnter(ev, ev.target);
-                }}"
-                on:touchmove="{function (ev) {
+                }}
+                ontouchmove={function (ev) {
                     ev.stopPropagation();
                     ev.preventDefault();
                     touchEnter(ev.touches[0]);
-                }}"
+                }}
                 animate:flip="{{ duration: 200 }}"
             >
                 <div class="buttons">
                     <button
                         class="up"
                         style="{'visibility: ' + (i > 0 ? '' : 'hidden') + ';'}"
-                        on:click="{function (ev) {
+                        onclick={function (ev) {
                             moveDatum(i, i - 1);
-                        }}"
+                        }}
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -170,9 +176,9 @@
                         style="{'visibility: ' +
                             (i < data.length - 1 ? '' : 'hidden') +
                             ';'}"
-                        on:click="{function (ev) {
+                        onclick={function (ev) {
                             moveDatum(i, i + 1);
-                        }}"
+                        }}
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -199,9 +205,9 @@
                 <div class="buttons delete">
                     {#if removesItems}
                         <button
-                            on:click="{function (ev) {
+                            onclick={function (ev) {
                                 removeDatum(i);
-                            }}"
+                            }}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

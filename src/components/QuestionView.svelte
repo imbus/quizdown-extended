@@ -6,9 +6,13 @@
     import ChoiceView from './ChoiceView.svelte';
     import { _ } from 'svelte-i18n';
 
-    export let question: BaseQuestion;
 
-    export let n: number;
+    interface Props {
+        question: BaseQuestion;
+        n: number;
+    }
+
+    let { question, n }: Props = $props();
 
     // a mapping from quiz types to svelte components
     let componentMap: Record<QuestionType, typeof SvelteComponent> = {
@@ -16,6 +20,8 @@
         MultipleChoice: ChoiceView,
         SingleChoice: ChoiceView,
     };
+
+    const QuestionComponent = $derived(componentMap[question.questionType]);
 </script>
 
 <h3>
@@ -26,7 +32,6 @@
     <p>{@html question.explanation}</p>
 {/if}
 
-<svelte:component
-    this="{componentMap[question.questionType]}"
-    question="{question}"
+<QuestionComponent
+    question={question}
 />

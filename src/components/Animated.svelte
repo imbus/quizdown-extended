@@ -1,8 +1,13 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
-    export let update: any;
+    interface Props {
+        update: any; // function fixPosition(node, { delay = 0, duration = 400, width = 300 }) {
+        children?: import('svelte').Snippet;
+    }
 
-    // function fixPosition(node, { delay = 0, duration = 400, width = 300 }) {
+    let { update, children }: Props = $props();
+
+    
     //     return {
     //         delay,
     //         duration,
@@ -15,7 +20,7 @@
 
 {#key update}
     <div class="animated" in:fade="{{ duration: 400 }}">
-        <slot />
+        {@render children?.()}
     </div>
 {/key}
 
