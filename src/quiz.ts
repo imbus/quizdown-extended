@@ -1,4 +1,6 @@
-import { writable, get, Writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
+// In Svelte 5, types are imported from 'svelte'
+import type { Writable } from 'svelte';
 import autoBind from 'auto-bind';
 import type { Config } from './config.js';
 import quizdown from './quizdown.js';

@@ -1,11 +1,10 @@
 <script lang="ts">
-    import type { QuestionType, BaseQuestion } from '../quiz';
+    import type { BaseQuestion, QuestionType } from '../types';
     import type { SvelteComponent } from 'svelte';
 
     import SequenceView from './SequenceView.svelte';
     import ChoiceView from './ChoiceView.svelte';
     import { _ } from 'svelte-i18n';
-
 
     interface Props {
         question: BaseQuestion;
@@ -15,23 +14,45 @@
     let { question, n }: Props = $props();
 
     // a mapping from quiz types to svelte components
-    let componentMap: Record<QuestionType, typeof SvelteComponent> = {
+    let componentMap = {
         Sequence: SequenceView,
         MultipleChoice: ChoiceView,
         SingleChoice: ChoiceView,
     };
 
     const QuestionComponent = $derived(componentMap[question.questionType]);
+
+    // Debug function to inspect the question object
+    function inspectQuestion() {
+        console.log("Question object:", JSON.parse(JSON.stringify(question)));
+    }
+    
+    // Run the inspection once to see what we're working with
+    $effect(() => {
+        if (question) {
+            inspectQuestion();
+        }
+    });
 </script>
 
 <h3>
-    {$_('questionLetter')}{n}: {@html question.text}
+    {$_('questionLetter')}{n}: 
+    <!-- Only use @html if question.text is actually HTML, otherwise just display the text -->
+    {#if typeof question.text === 'string'}
+        {@html question.text}
+    {:else}
+        {JSON.stringify(question.text)}
+    {/if}
 </h3>
 
 {#if question.explanation}
-    <p>{@html question.explanation}</p>
+    <p>
+        {#if typeof question.explanation === 'string'}
+            {@html question.explanation}
+        {:else}
+            {JSON.stringify(question.explanation)}
+        {/if}
+    </p>
 {/if}
 
-<QuestionComponent
-    question={question}
-/>
+<QuestionComponent {question} />

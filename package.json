@@ -36,6 +36,7 @@
     "katex": "^0.16.22",
     "marked": "^16.0.0",
     "strip-indent": "^4.0.0",
+    "svelte-dnd-action": "^0.9.63",
     "svelte-i18n": "^4.0.1",
     "tsx": "^4.20.3",
     "yaml": "^2.8.0"

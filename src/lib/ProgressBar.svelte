@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { run } from 'svelte/legacy';
-
     import { tweened } from 'svelte/motion';
     import { cubicOut } from 'svelte/easing';
 
@@ -15,9 +13,11 @@
         duration: 400,
         easing: cubicOut,
     });
-    run(() => {
+    
+    $effect(() => {
         progress.set(Math.min(max, value) + 0.5);
     });
+    
     let progressPercent = $derived(String(($progress / (max + 0.5)) * 100) + '%');
 </script>
 
@@ -28,7 +28,6 @@
 <style>
     .progress {
         grid-area: auto;
-
         height: 0.4em;
         width: 100%;
         position: relative;
