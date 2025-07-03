@@ -2,26 +2,26 @@
     import { run } from 'svelte/legacy';
 
     import type { Quiz } from './quiz';
-    import ProgressBar from './components/ProgressBar.svelte';
+    import ProgressBar from './lib/ProgressBar.svelte';
     import { onMount } from 'svelte';
     import registerLanguages from './languages/i18n';
-    import Card from './components/Card.svelte';
-    import Credits from './components/Credits.svelte';
-    import SmoothResize from './components/SmoothResize.svelte';
-    import QuestionView from './components/QuestionView.svelte';
-    import Row from './components/Row.svelte';
-    import Button from './components/Button.svelte';
+    import Card  from './lib/Card.svelte';
+    import Credits from './lib/Credits.svelte';
+    import SmoothResize from './lib/SmoothResize.svelte';
+    import QuestionView from './lib/QuestionView.svelte';
+    import Row from './lib/Row.svelte';
+    import Button from './lib/Button.svelte';
     import { _ } from 'svelte-i18n';
-    import ResultsView from './components/ResultsView.svelte';
+    import ResultsView from './lib/ResultsView.svelte';
     // import { Linear, CheckFirst } from './progressModes.js';
-    import Animated from './components/Animated.svelte';
+    import Animated from './lib/Animated.svelte';
     import registerIcons from './registerIcons.js';
-    import Icon from './components/Icon.svelte';
-    import Hint from './components/Hint.svelte';
+    import Icon from './lib/Icon.svelte';
+    import Hint from './lib/Hint.svelte';
     import { fly } from 'svelte/transition';
-    import Container from './components/Container.svelte';
-    import Loading from './components/Loading.svelte';
-    // import Modal from './components/Modal.svelte';
+    import Container from './lib/Container.svelte';
+    import Loading from './lib/Loading.svelte';
+    // import Modal from './lib/Modal.svelte';
     import { createEventDispatcher } from 'svelte';
 
     interface Props {
@@ -176,6 +176,7 @@
             </Container>
         </Loading>
     </Card>
+
 </div>
 
 <!-- global styles applied to all elements in the app -->

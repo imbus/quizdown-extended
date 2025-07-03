@@ -1,24 +1,25 @@
-<!-- @migration-task Error while migrating Svelte code: Can't migrate code with beforeUpdate. Please migrate by hand. -->
-<!-- @migration-task Error while migrating Svelte code: Can't migrate code with beforeUpdate. Please migrate by hand. -->
 <script lang="ts">
     import type { Quiz } from '../quiz';
-    import { beforeUpdate } from 'svelte';
 
-    export let quiz: Quiz;
-    let emojis = ['❌', '✅'];
+    import { onMount, tick } from 'svelte';
+    //import { reactive, effect, props } from 'svelte';
     import { _ } from 'svelte-i18n';
     import { fade } from 'svelte/transition';
     import Icon from './Icon.svelte';
     import Loading from './Loading.svelte';
     import { get } from 'svelte/store';
 
-    let waitTime = 800;
-    if (get(quiz.isEvaluated)) {
-        // only wait longer for the first time
-        waitTime = 300;
-    }
+    const { quiz } = props<{ quiz: Quiz }>();
+
+    const emojis = ['❌', '✅'];
+
+    let waitTime = reactive(() => get(quiz.isEvaluated) ? 300 : 800);
     let points = 0;
-    beforeUpdate(() => (points = quiz.evaluate()));
+
+    // Run evaluation and update points before render
+    effect(() => {
+        points = quiz.evaluate();
+    });
 
     function format(n: number) {
         return n.toLocaleString('en-US', {
@@ -26,20 +27,19 @@
         });
     }
 
-    let gradedPoints = quiz.evaluate();
+    const gradedPoints = quiz.evaluate();
     let passed = false;
-    if (quiz.config.passingGrade != undefined) {
-      if( (Number(gradedPoints)/Number(quiz.questions.length) * 100) 
-           >= Number(quiz.config.passingGrade) ) {
-           passed = true;
-      }
+
+    if (quiz.config.passingGrade !== undefined) {
+        const scorePercent = (gradedPoints / quiz.questions.length) * 100;
+        passed = scorePercent >= Number(quiz.config.passingGrade);
     }
- 
 </script>
 
-<h3>{$_('resultsTitle')}</h3>
-<Loading ms="{waitTime}" minHeight="{150}">
-    <div in:fade="{{ duration: 1000 }}">
+<h3>{@_('resultsTitle')}</h3>
+
+<Loading {waitTime} minHeight={150}>
+    <div in:fade={{ duration: 1000 }}>
         <h1>
             <Icon name="check-double" />
             {format(points)}/{format(quiz.questions.length)}
@@ -47,25 +47,23 @@
 
         <ol>
             {#each quiz.questions as question, i}
-                <li class="top-list-item" on:click="{() => {
-                    if(quiz.config.enableRetry) {
-                        quiz.jump(i);
-                    }
-                    }
-                    }">
+                <li
+                    class="top-list-item"
+                    on:click={() => {
+                        if (quiz.config.enableRetry) {
+                            quiz.jump(i);
+                        }
+                    }}
+                >
                     <span class="list-question">
                         {emojis[+question.solved]}
                         {@html question.text}
                     </span>
                     <ol>
-                        <!-- answer comments when selected and available -->
                         {#each question.selected as selected}
                             {#if question.answers[selected].comment !== ''}
                                 <li class="list-comment">
-                                    <i
-                                        >{@html question.answers[selected]
-                                            .html}</i
-                                    >:
+                                    <i>{@html question.answers[selected].html}</i>:
                                     {@html question.answers[selected].comment}
                                 </li>
                             {/if}
@@ -73,14 +71,13 @@
                     </ol>
                 </li>
             {/each}
-           <h2>
-             {#if passed == true}
-               {quiz.config.customPassMsg}
-             {/if}
-             {#if passed == false && quiz.config.passingGrade != undefined}
-               {quiz.config.customFailMsg} 
-             {/if}
-           </h2> 
+            <h2>
+                {#if passed}
+                    {quiz.config.customPassMsg}
+                {:else if quiz.config.passingGrade !== undefined}
+                    {quiz.config.customFailMsg}
+                {/if}
+            </h2>
         </ol>
     </div>
 </Loading>

@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "verbatimModuleSyntax": true
   },
   "include": ["src/**/*"]
 }
