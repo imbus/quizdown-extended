@@ -107,51 +107,28 @@ function parseAnswers(tokens: marked.Token[]): Array<Answer> {
     let list = tokens.find(
         (token) => token.type == 'list'
     ) as marked.Tokens.List;
-    
-    if (!list || !list.items) {
-        return [];
-    }
-    
     let answers: Array<Answer> = [];
     list.items.forEach(function (item, i) {
-        if (!item) return;
-        
         let answer = parseAnswer(item);
-        // Ensure text and comment are strings
-        const text = typeof answer.text === 'string' ? answer.text : safeStringify(answer.text);
-        const comment = typeof answer.comment === 'string' ? answer.comment : safeStringify(answer.comment);
-        
         answers.push(
-            new Answer(i, text, item['checked'], comment)
+            new Answer(i, answer['text'], item['checked'], answer['comment'])
         );
     });
     return answers;
 }
 
 function parseAnswer(item: marked.Tokens.ListItem) {
-    if (!item || !Array.isArray(item['tokens'])) {
-        return { text: '', comment: '' };
-    }
-    
     let comments = item['tokens'].filter((token) => token.type == 'blockquote');
     let texts = item['tokens'].filter((token) => token.type != 'blockquote');
-    return { 
-        text: parseTokens(texts), 
-        comment: parseTokens(comments) 
-    };
+    return { text: parseTokens(texts), comment: parseTokens(comments) };
 }
 
 function determineQuestionType(tokens: marked.Token[]): QuestionType {
     let list = tokens.find(
         (token) => token.type == 'list'
     ) as marked.Tokens.List;
-    
-    if (!list) {
-        return 'SingleChoice'; // Default
-    }
-    
     if (list.ordered) {
-        if (list.items && list.items[0] && list.items[0].task) {
+        if (list.items[0].task) {
             return 'SingleChoice';
         } else {
             return 'Sequence';
@@ -167,144 +144,60 @@ function parseTokens(tokens: marked.Token[]): string {
         return '';
     }
     
+    // Create a clone of the tokens array with a new 'links' property
+    // This avoids modifying the original tokens array which might cause side effects
+    const tokensWithLinks = [...tokens];
+    // @ts-ignore
+    tokensWithLinks.links = {};
+    
     try {
-        // Check if we need to set the links property on tokens
-        // Some versions of marked require this for parsing
-        if (!tokens.links && Array.isArray(tokens) && tokens.length > 0) {
-            // @ts-ignore
-            tokens.links = {};
-        }
+        // Get the raw HTML output directly instead of using marked.parser
+        // This skips the internal object representation that might be causing issues
+        let html = '';
         
-        const parsed = marked.parser(tokens as marked.TokensList);
+        // Method 1: Try using marked.parser directly but with toString to force string conversion
+        const parsedResult = marked.parser(tokensWithLinks as marked.TokensList);
+        html = String(parsedResult);
         
-        // Handle all possible return types
-        if (parsed === null || parsed === undefined) {
-            return '';
-        }
-        
-        if (typeof parsed === 'string') {
-            return DOMPurify.sanitize(parsed);
-        }
-        
-        // Handle object case - common with marked parser
-        if (typeof parsed === 'object') {
-            // Extract the raw HTML if available (some marked versions return {html: string})
-            if (parsed.hasOwnProperty('html') && typeof parsed.html === 'string') {
-                return DOMPurify.sanitize(parsed.html);
-            }
-            
-            // Try to get text content if available
-            if (parsed.hasOwnProperty('text') && typeof parsed.text === 'string') {
-                return DOMPurify.sanitize(parsed.text);
-            }
-            
-            // Try to get content if available
-            if (parsed.hasOwnProperty('content') && typeof parsed.content === 'string') {
-                return DOMPurify.sanitize(parsed.content);
-            }
-            
-            // Use raw property if available
-            if (parsed.hasOwnProperty('raw') && typeof parsed.raw === 'string') {
-                return DOMPurify.sanitize(parsed.raw);
-            }
-            
-            // If marked parser returned an array of tokens, try to extract text from them
-            if (Array.isArray(parsed)) {
-                const textParts = parsed.map(token => {
-                    if (typeof token === 'string') return token;
-                    if (token && typeof token.text === 'string') return token.text;
-                    if (token && typeof token.raw === 'string') return token.raw;
-                    return '';
-                }).filter(Boolean);
-                
-                if (textParts.length > 0) {
-                    return DOMPurify.sanitize(textParts.join(' '));
+        // If the result is still [object Object], try alternative approaches
+        if (html === '[object Object]') {
+            // Method 2: Process each token individually and combine the results
+            html = tokens.map(token => {
+                // Extract text content from different token types
+                if (token.type === 'paragraph' && token.text) {
+                    return `<p>${token.text}</p>`;
+                } else if (token.type === 'heading' && token.text) {
+                    const level = token.depth || 1;
+                    return `<h${level}>${token.text}</h${level}>`;
+                } else if (token.type === 'code' && token.text) {
+                    return `<pre><code>${token.text}</code></pre>`;
+                } else if (token.type === 'blockquote' && token.text) {
+                    return `<blockquote>${token.text}</blockquote>`;
+                } else if (token.type === 'text' && token.text) {
+                    return token.text;
+                } else if (token.type === 'list' && Array.isArray(token.items)) {
+                    const listItems = token.items.map(item => `<li>${item.text || ''}</li>`).join('');
+                    return token.ordered ? `<ol>${listItems}</ol>` : `<ul>${listItems}</ul>`;
+                } else if (token.raw) {
+                    return token.raw;
                 }
-            }
-            
-            // Last resort: safely convert to string
-            return DOMPurify.sanitize(safeStringify(parsed));
+                return '';
+            }).join('');
         }
         
-        // Convert any other type to string
-        return DOMPurify.sanitize(String(parsed));
+        return DOMPurify.sanitize(html);
     } catch (error) {
         console.error('Error parsing tokens:', error);
-        // Try to extract text from tokens directly as a fallback
-        try {
-            const textContent = extractTextFromTokens(tokens);
-            return DOMPurify.sanitize(textContent);
-        } catch (e) {
+        
+        // Fallback: extract text content directly from tokens
+        const textContent = tokens.map(token => {
+            if (token.text) return token.text;
+            if (token.raw) return token.raw;
             return '';
-        }
+        }).join(' ');
+        
+        return DOMPurify.sanitize(textContent);
     }
-}
-
-// Helper function to extract text directly from tokens
-function extractTextFromTokens(tokens: marked.Token[]): string {
-    if (!Array.isArray(tokens) || tokens.length === 0) {
-        return '';
-    }
-    
-    return tokens.map(token => {
-        if (typeof token === 'string') return token;
-        
-        if (token.type === 'text' && token.hasOwnProperty('text')) {
-            return token.text;
-        }
-        
-        if (token.type === 'paragraph' && token.hasOwnProperty('text')) {
-            return token.text;
-        }
-        
-        if (token.type === 'heading' && token.hasOwnProperty('text')) {
-            return token.text;
-        }
-        
-        if (token.type === 'code' && token.hasOwnProperty('text')) {
-            return token.text;
-        }
-        
-        if (token.hasOwnProperty('raw') && typeof token.raw === 'string') {
-            return token.raw;
-        }
-        
-        return '';
-    }).filter(Boolean).join(' ');
-}
-
-// Safe way to convert any value to a string without [object Object]
-function safeStringify(value: any): string {
-    if (value === null || value === undefined) {
-        return '';
-    }
-    
-    if (typeof value === 'string') {
-        return value;
-    }
-    
-    if (typeof value === 'object') {
-        try {
-            // Try to use JSON.stringify first for better readability
-            return JSON.stringify(value);
-        } catch (e) {
-            // If that fails, try to extract meaningful properties
-            if (value.hasOwnProperty('toString') && typeof value.toString === 'function' && value.toString !== Object.prototype.toString) {
-                return value.toString();
-            }
-            
-            // Extract properties as a last resort
-            const props = [];
-            for (const key in value) {
-                if (value.hasOwnProperty(key) && value[key] !== undefined) {
-                    props.push(`${key}: ${typeof value[key] === 'object' ? '[object]' : value[key]}`);
-                }
-            }
-            return props.length ? `{ ${props.join(', ')} }` : '';
-        }
-    }
-    
-    return String(value);
 }
 
 function htmlDecode(text: string) {
