@@ -24,38 +24,34 @@ function register(extension: QuizdownExtension): Quizdown {
 }
 
 function createApp(rawQuizdown: string, node: Element, config: Config): App {
-    node.innerHTML = '';
-    let root: ShadowRoot;
-    if (!!node.shadowRoot) {
-        //clear root if it allready exists
-        root = node.shadowRoot;
-        root.innerHTML = '';
-    } else {
-        root = node.attachShadow({ mode: 'open' });
-    }
-    try {
-        let quiz = parseQuizdown(rawQuizdown, config);
+    node.innerHTML = ''; // Clear the node content
 
-        let app = mount(App, {
-            // https://github.com/sveltejs/svelte/pull/5870
-            target: root,
+    try {
+        const quiz = parseQuizdown(rawQuizdown, config);
+
+        const app = mount(App, {
+            target: node, // Directly mount into the given node
             intro: false,
             props: {
                 quiz: quiz,
             },
         });
+
         // Listen for quiz-stats event and re-emit to parent
-        root.addEventListener('quiz-stats', (e: Event) => {
+        node.addEventListener('quiz-stats', (e: Event) => {
             const customEvent = e as CustomEvent;
-            // Forward to parent window
-            const statsEvent = new CustomEvent('quizdown-stats', { detail: customEvent.detail });
+            const statsEvent = new CustomEvent('quizdown-stats', {
+                detail: customEvent.detail,
+            });
             node.dispatchEvent(statsEvent);
         });
+
         return app;
     } catch (e) {
-        root.innerHTML = `${e}. App could not render. Please check your quizdown syntax.`;
+        node.innerHTML = `${e}. App could not render. Please check your quizdown syntax.`;
     }
 }
+
 
 function init(config: object = {}): void {
     let globalConfig = new Config(config);

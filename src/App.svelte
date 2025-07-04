@@ -13,8 +13,6 @@
     import { _ } from 'svelte-i18n';
     import ResultsView from './lib/ResultsView.svelte';
     import Animated from './lib/Animated.svelte';
-    import registerIcons from './registerIcons.js';
-    import Icon from './lib/Icon.svelte';
     import Hint from './lib/Hint.svelte';
     import { fly } from 'svelte/transition';
     import Container from './lib/Container.svelte';
@@ -30,7 +28,6 @@
     let enableRetry = quiz.config.enableRetry;
 
     registerLanguages(quiz.config.locale);
-    registerIcons();
 
     let node: HTMLElement = $state();
     let minHeight = 150;
@@ -191,7 +188,7 @@
                             title={$_('hint')}
                             disabled={!currentQuestion?.hint || currentHintShown || showingResults}
                             buttonAction={showHint}
-                        ><Icon name="lightbulb" solid={false} /></Button>
+                        >💡</Button>
                     {/snippet}
                     {#snippet center()}
                         <Button
@@ -199,14 +196,14 @@
                             title={$_('previous')}
                             disabled={isFirst || showingResults || evaluationDone}
                             buttonAction={goToPrevious}
-                        ><Icon name="arrow-left" size="lg" /></Button>
+                        >⬅</Button>
 
                         <Button
                             btnClass="quizControlButton nextButton"
                             disabled={isLast || showingResults || evaluationDone}
                             buttonAction={goToNext}
                             title={$_('next')}
-                        ><Icon name="arrow-right" size="lg" /></Button>
+                        >⮕</Button>
 
                         {#if isLast || allQuestionsVisited}
                             <div in:fly={{ x: 200, duration: 500 }}>
@@ -216,7 +213,7 @@
                                     title={$_('evaluate')}
                                     buttonAction={showResults}
                                 >
-                                    <Icon name="check-double" size="lg" />
+                                    ✅
                                 </Button>
                             </div>
                         {/if}
@@ -227,7 +224,7 @@
                                 title={$_('reset')}
                                 buttonAction={resetQuiz}
                                 btnClass="quizControlButton retryButton"
-                            ><Icon name="redo" /></Button>
+                            >↻</Button>
                         {/if}
                     {/snippet}
                 </Row>

@@ -1,6 +1,5 @@
 <script lang="ts">
     import type { Quiz } from '../quiz';
-    import Icon from './Icon.svelte';
     import { _ } from 'svelte-i18n';
 
     interface Props {
@@ -51,9 +50,9 @@
             >
                 <div class="question-indicator">
                     {#if question.solved}
-                        <Icon name="check" color="green" />
+                        ✅
                     {:else}
-                        <Icon name="times" color="red" />
+                        ❌
                     {/if}
                 </div>
                 <div class="question-text">

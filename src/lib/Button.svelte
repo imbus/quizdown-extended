@@ -13,7 +13,7 @@
     class={btnClass}
     title={title}
     disabled={disabled}
-    on:click={() => buttonAction()}
+    onclick={() => buttonAction()}
 >
     <slot />
 </button>

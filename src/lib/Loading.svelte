@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Icon from './Icon.svelte';
 
     interface Props {
         ms: number;
@@ -29,7 +28,7 @@
             bind:this="{node}"
             style="min-height:{minHeight}px;"
         >
-            <Icon name="circle-notch" spin="{true}" size="2x" />
+            I will be the loading spinner
         </div>
     {:then resolved}
         {@render children?.()}
