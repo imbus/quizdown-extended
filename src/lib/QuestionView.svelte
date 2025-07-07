@@ -23,7 +23,7 @@
     const QuestionComponent = $derived(componentMap[question.questionType]);
 
     // Debug function to inspect the question object
-    function inspectQuestion() {
+    /*function inspectQuestion() {
         console.log("Question object:", JSON.parse(JSON.stringify(question)));
     }
     
@@ -32,7 +32,7 @@
         if (question) {
             inspectQuestion();
         }
-    });
+    });*/
 </script>
 
 <h3>
