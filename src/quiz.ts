@@ -1,6 +1,5 @@
 import { writable, get } from 'svelte/store';
-// In Svelte 5, types are imported from 'svelte'
-import type { Writable } from 'svelte';
+import type { Writable } from 'svelte/store';
 import autoBind from 'auto-bind';
 import type { Config } from './config.js';
 import quizdown from './quizdown.js';
@@ -85,14 +84,22 @@ export abstract class BaseQuestion {
 
 class Blanks extends BaseQuestion {
     isCorrect() {
-        this.solved = false;
+        let trueAnswerIds = this.answers
+            .filter((answer) => answer.correct)
+            .map((answer) => answer.id);
+        let selectedAnswerIds = this.selected.map((i) => this.answers[i].id);
+        this.solved = isEqual(trueAnswerIds.sort(), selectedAnswerIds.sort());
         return this.solved;
     }
 }
 
 class Pairs extends BaseQuestion {
     isCorrect() {
-        this.solved = false;
+        let trueAnswerIds = this.answers
+            .filter((answer) => answer.correct)
+            .map((answer) => answer.id);
+        let selectedAnswerIds = this.selected.map((i) => this.answers[i].id);
+        this.solved = isEqual(trueAnswerIds.sort(), selectedAnswerIds.sort());
         return this.solved;
     }
 }
@@ -154,6 +161,41 @@ export class SingleChoice extends Choice {
         if (nCorrect > 1) {
             throw 'Single Choice questions can not have more than one correct answer.';
         }
+    }
+
+    isCorrect(): boolean {
+        // 1. Find the ID of the answer that is marked as correct.
+        // The .find() method gets the first answer object where `answer.correct` is true.
+        const correctAnswer = this.answers.find(answer => answer.correct);
+
+        // If for some reason no correct answer is defined for this question, it's wrong.
+        if (!correctAnswer) {
+            this.solved = false;
+            return false;
+        }
+        const correctAnswerId = correctAnswer.id;
+
+        // 2. Find the ID of the answer the user selected.
+        // First, check if the user has selected anything.
+        if (this.selected.length === 0) {
+            this.solved = false;
+            return false;
+        }
+
+        // `this.selected[0]` gives us the INDEX of the choice in the shuffled array.
+        const selectedIndex = this.selected[0];
+        const selectedAnswer = this.answers[selectedIndex];
+
+        // If the selection is invalid, it's not correct.
+        if (!selectedAnswer) {
+            this.solved = false;
+            return false;
+        }
+        const selectedAnswerId = selectedAnswer.id;
+
+        // 3. Compare the two stable IDs.
+        this.solved = (correctAnswerId === selectedAnswerId);
+        return this.solved;
     }
 }
 
@@ -262,10 +304,13 @@ export class Quiz {
         var points = 0;
         for (var q of this.questions) {
             if (q.isCorrect()) {
+                console.log(q);
                 points += 1;
+                console.log("points: " + points);
             }
         }
         this.isEvaluated.set(true);
+        console.log("points - method end: " + points);
         return points;
     }
 
