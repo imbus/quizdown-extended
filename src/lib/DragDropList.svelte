@@ -1,318 +1,92 @@
-<!-- @migration-task Error while migrating Svelte code: Imports of `svelte/internal/*` are forbidden. It contains private runtime code which is subject to change without notice. If you're importing from `svelte/internal/*` to work around a limitation of Svelte, please open an issue at https://github.com/sveltejs/svelte and explain your use case
-https://svelte.dev/e/import_svelte_internal_forbidden -->
 <script lang="ts">
-    //copied and adopted from https://github.com/jwlarocque/svelte-dragdroplist
-    import { flip } from 'svelte/animate';
-    import type { HtmlTag } from 'svelte/internal';
+	// In Svelte 5, declare the bindable prop with $props.
+	let { data } = $props<{ data: string[] }>();
 
-    interface Props {
-        data?: any;
-        removesItems?: boolean;
-    }
+	// Use $state for local, reactive UI state.
+	let draggingIndex = $state(-1);
+	let dragOverIndex = $state(-1);
 
-    let { data = $bindable([]), removesItems = false }: Props = $props();
+	function handleDragStart(index: number) {
+		draggingIndex = index;
+	}
 
-    let ghost: HTMLElement = $state();
-    let grabbed: HTMLElement = $state();
+	function handleDragOver(event: DragEvent, index: number) {
+		event.preventDefault(); // Necessary to allow the `drop` event to fire.
+		dragOverIndex = index;
+	}
 
-    let lastTarget;
+	function handleDrop(event: DragEvent, dropIndex: number) {
+		event.preventDefault();
+		if (draggingIndex === -1 || draggingIndex === dropIndex) {
+			resetDragState();
+			return;
+		}
 
-    let mouseY = $state(0); // pointer y coordinate within client
-    let offsetY = $state(0); // y distance from top of grabbed element to pointer
-    let layerY = $state(0); // distance from top of list to top of client
+		const items = [...data];
+		const [draggedItem] = items.splice(draggingIndex, 1);
+		items.splice(dropIndex, 0, draggedItem);
 
-    function grab(clientY: number, element: HTMLElement) {
-        // modify grabbed element
-        grabbed = element;
-        grabbed.dataset.grabY = String(clientY);
+		// THE FIX: Simply assign the new array to the prop.
+		// Svelte's compiler handles updating the parent component from here.
+		data = items;
 
-        // modify ghost element (which is actually dragged)
-        ghost.innerHTML = grabbed.innerHTML;
+		resetDragState();
+	}
 
-        // record offset from cursor to top of element
-        // (used for positioning ghost)
-        offsetY = grabbed.getBoundingClientRect().y - clientY;
-        drag(clientY);
-    }
-
-    // drag handler updates cursor position
-    function drag(clientY: number) {
-        if (grabbed) {
-            mouseY = clientY;
-            layerY = ghost.parentElement.getBoundingClientRect().y;
-        }
-    }
-
-    // touchEnter handler emulates the mouseenter event for touch input
-    // (more or less)
-    function touchEnter(ev: Touch) {
-        drag(ev.clientY);
-        // trigger dragEnter the first time the cursor moves over a list item
-        let root = ghost.getRootNode() as HTMLDocument | ShadowRoot;
-        let target = root.elementFromPoint(ev.clientX, ev.clientY);
-        if (!!target) {
-            target = target.closest('.item') as HTMLElement;
-            if (target && target != lastTarget) {
-                lastTarget = target;
-                dragEnter(ev, target);
-            }
-        }
-    }
-
-    function dragEnter(
-        ev: Touch | MouseEvent,
-        target: HTMLElement | EventTarget
-    ) {
-        // swap items in data
-        let targetElement = target as HTMLElement;
-        if (
-            grabbed &&
-            target != grabbed &&
-            targetElement.classList.contains('item')
-        ) {
-            moveDatum(
-                parseInt(grabbed.dataset.index),
-                parseInt(targetElement.dataset.index)
-            );
-        }
-    }
-
-    // does the actual moving of items in data
-    function moveDatum(from: number, to: number) {
-        let temp = data[from];
-        data = [...data.slice(0, from), ...data.slice(from + 1)];
-        data = [...data.slice(0, to), temp, ...data.slice(to)];
-    }
-
-    function release(ev: Touch | MouseEvent) {
-        grabbed = null;
-    }
-
-    function removeDatum(index: number) {
-        data = [...data.slice(0, index), ...data.slice(index + 1)];
-    }
+	function handleDragEnd() {
+		resetDragState();
+	}
+	
+	function resetDragState() {
+		draggingIndex = -1;
+		dragOverIndex = -1;
+	}
 </script>
 
-<div class="dragdroplist">
-    <div
-        bind:this="{ghost}"
-        id="ghost"
-        class="{grabbed ? 'item haunting' : 'item'}"
-        style="{'top: ' + (mouseY + offsetY - layerY) + 'px'}"
-    >
-        <p></p>
-    </div>
-    <div
-        class="list"
-        onmousemove={function (ev) {
-            ev.stopPropagation();
-            drag(ev.clientY);
-        }}
-        ontouchmove={function (ev) {
-            ev.stopPropagation();
-            drag(ev.touches[0].clientY);
-        }}
-        onmouseup={function (ev) {
-            ev.stopPropagation();
-            release(ev);
-        }}
-        onmouseleave={function (ev) {
-            ev.stopPropagation();
-            release(ev);
-        }}
-        ontouchend={function (ev) {
-            ev.stopPropagation();
-            release(ev.touches[0]);
-        }}
-    >
-        {#each data as datum, i (datum.id ? datum.id : JSON.stringify(datum))}
-            <div
-                id="{grabbed &&
-                (datum.id ? datum.id : JSON.stringify(datum)) ==
-                    grabbed.dataset.id
-                    ? 'grabbed'
-                    : ''}"
-                class="item"
-                data-index="{i}"
-                data-id="{datum.id ? datum.id : JSON.stringify(datum)}"
-                data-grabY="0"
-                onmousedown={function (ev) {
-                    grab(ev.clientY, this);
-                }}
-                ontouchstart={function (ev) {
-                    grab(ev.touches[0].clientY, this);
-                }}
-                onmouseenter={function (ev) {
-                    ev.stopPropagation();
-                    dragEnter(ev, ev.target);
-                }}
-                ontouchmove={function (ev) {
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                    touchEnter(ev.touches[0]);
-                }}
-                animate:flip="{{ duration: 200 }}"
-            >
-                <div class="buttons">
-                    <button
-                        class="up"
-                        style="{'visibility: ' + (i > 0 ? '' : 'hidden') + ';'}"
-                        onclick={function (ev) {
-                            moveDatum(i, i - 1);
-                        }}
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            width="16px"
-                            height="16px"
-                            ><path d="M0 0h24v24H0V0z" fill="none"></path><path
-                                d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6 1.41 1.41z"
-                            ></path></svg
-                        >
-                    </button>
-                    <button
-                        class="down"
-                        style="{'visibility: ' +
-                            (i < data.length - 1 ? '' : 'hidden') +
-                            ';'}"
-                        onclick={function (ev) {
-                            moveDatum(i, i + 1);
-                        }}
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            width="16px"
-                            height="16px"
-                            ><path d="M0 0h24v24H0V0z" fill="none"></path><path
-                                d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
-                            ></path></svg
-                        >
-                    </button>
-                </div>
-
-                <div class="content">
-                    {#if datum.html}
-                        {@html datum.html}
-                    {:else if datum.text}
-                        <p>{datum.text}</p>
-                    {:else}
-                        <p>{datum}</p>
-                    {/if}
-                </div>
-
-                <div class="buttons delete">
-                    {#if removesItems}
-                        <button
-                            onclick={function (ev) {
-                                removeDatum(i);
-                            }}
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                width="16"
-                                ><path d="M0 0h24v24H0z" fill="none"
-                                ></path><path
-                                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
-                                ></path></svg
-                            >
-                        </button>
-                    {/if}
-                </div>
-            </div>
-        {/each}
-    </div>
-</div>
-
 <style>
-    .dragdroplist {
-        position: relative;
-        padding: 0;
-    }
-
-    .list {
-        cursor: grab;
-        z-index: 5;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .item {
-        box-sizing: border-box;
-        display: inline-flex;
-        width: 100%;
-        margin-bottom: 0.5em;
-        border-radius: 2px;
-        user-select: none;
-        margin: 5px;
-        padding: 0;
-        background-color: var(--quizdown-color-secondary);
-        border: 3px solid transparent;
-        color: var(--quizdown-color-text);
-    }
-
-    .item:last-child {
-        margin-bottom: 0;
-    }
-
-    .item:not(#grabbed):not(#ghost) {
-        z-index: 10;
-    }
-
-    .item > * {
-        margin: auto auto auto 0;
-    }
-
-    .buttons {
-        width: 32px;
-        min-width: 32px;
-        margin: auto 0;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .buttons button {
-        cursor: pointer;
-        width: 18px;
-        height: 18px;
-        margin: 0 auto;
-        padding: 0;
-        border: 1px solid rgba(0, 0, 0, 0);
-        background-color: inherit;
-    }
-
-    .buttons button:focus {
-        border: 1px solid black;
-    }
-
-    .delete {
-        width: 32px;
-    }
-
-    #grabbed {
-        opacity: 0;
-    }
-
-    #ghost {
-        pointer-events: none;
-        z-index: -5;
-        position: absolute;
-        top: 0;
-        left: 0;
-        opacity: 0;
-        border: 3px solid var(--quizdown-color-primary);
-        background-color: var(--quizdown-color-secondary);
-    }
-
-    #ghost * {
-        pointer-events: none;
-    }
-
-    #ghost.haunting {
-        z-index: 20;
-        opacity: 1;
-    }
+	.list-container {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 10px;
+		border: 1px solid #ccc;
+		border-radius: 8px;
+	}
+	.list-item {
+		padding: 12px;
+		border: 1px solid var(--quizdown-color-primary);
+		border-radius: 4px;
+		cursor: grab;
+		transition: background-color 0.2s, box-shadow 0.2s;
+		user-select: none;
+	}
+	.list-item:active {
+		cursor: grabbing;
+	}
+	.list-item.dragging {
+		opacity: 0.5;
+		box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+	}
+	.list-item.dragover {
+		background-color: #e0f7fa;
+		border-style: dashed;
+	}
 </style>
+
+<div class="list-container" role="list">
+	{#each data as item, index (item)}
+		<div
+			role="listitem"
+			draggable="true"
+			ondragstart={() => handleDragStart(index)}
+			ondragover={(e) => handleDragOver(e, index)}
+			ondrop={(e) => handleDrop(e, index)}
+			ondragend={handleDragEnd}
+			class="list-item"
+			class:dragging={draggingIndex === index}
+			class:dragover={dragOverIndex === index && draggingIndex !== index}
+		>
+			{item.html}
+		</div>
+	{/each}
+</div>
