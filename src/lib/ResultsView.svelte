@@ -7,64 +7,76 @@
     }
 
     let { quiz }: Props = $props();
-    
+
     // Calculate the score
     let score = $state(0);
     let percent = $state(0);
-    
+
     // Initialize score calculation
     $effect(() => {
         if (quiz) {
             score = quiz.evaluate();
             percent = Math.round((score / quiz.questions.length) * 100);
-            
+
             // Log questions for debugging
-            console.log("Results questions:", JSON.parse(JSON.stringify(quiz.questions)));
+            console.log(
+                'Results questions:',
+                JSON.parse(JSON.stringify(quiz.questions))
+            );
         }
     });
-    
-    // Function to safely get question text content
-    function getQuestionText(question) {
-        if (!question) return '';
-        
-        // If text is a string, return it directly
-        if (typeof question.text === 'string') return question.text;
-        
-        // If question is an object, try to stringify it
-        try {
-            return JSON.stringify(question.text);
-        } catch (e) {
-            return 'Error displaying question';
-        }
-    }
 </script>
 
 <div>
     <h2>{$_('quizResults')}</h2>
-    <p>{$_('scoreText', { values: { score, total: quiz.questions.length } })}</p>
+    <p>
+        {$_('scoreText', { values: { score, total: quiz.questions.length } })}
+    </p>
     <h3>{percent}%</h3>
-    <div class="questions-review">
-        {#each quiz.questions as question, i}
-            <div
-                class="question-result {question.solved ? 'correct' : 'incorrect'}"
-            >
-                <div class="question-indicator">
-                    {#if question.solved}
-                        ✅
-                    {:else}
-                        ❌
-                    {/if}
-                </div>
-                <div class="question-text">
-                    <span class="question-number">{i + 1}. </span>
-                    <!-- Use our safe getter function -->
-                    {@html getQuestionText(question)}
-                </div>
-            </div>
-        {/each}
-    </div>
+    <table class="questions-review">
+        <thead>
+            <tr>
+                <th class="id-column">#</th>
+                <th>Status</th>
+                <th>Question</th>
+            </tr>
+        </thead>
+        <tbody>
+            {#each quiz.questions as question, i}
+                <tr class={question.correct ? 'correct' : 'incorrect'}>
+                    <td class="id-column">{i + 1}.</td>
+                    <td>
+                        {#if question.correct}
+                            ✅
+                        {:else}
+                            ❌
+                        {/if}
+                    </td>
+                    <td>{question.getTextWithoutHTML()}</td>
+                </tr>
+            {/each}
+        </tbody>
+    </table>
 </div>
 
 <style>
-    /* Styles remain the same */
+    table.questions-review {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    table.questions-review th,
+    table.questions-review td {
+        border: none;
+        padding: 8px;
+        text-align: left;
+    }
+
+    table.questions-review td:hover {
+        filter: opacity(0.8);
+    }
+
+    .id-column {
+        width: 60px;
+    }
 </style>

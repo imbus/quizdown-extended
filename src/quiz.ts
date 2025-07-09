@@ -36,6 +36,7 @@ export abstract class BaseQuestion {
     readonly explanation: string;
     selected: Array<number>;
     solved: boolean;
+    correct: boolean;
     readonly hint: string;
     readonly questionType: QuestionType;
     readonly options: Config;
@@ -57,6 +58,7 @@ export abstract class BaseQuestion {
         this.explanation = explanation;
         this.hint = hint;
         this.solved = false;
+        this.correct = false;
         this.showHint = writable(false);
         this.options = options;
         this.answers = [...answers]; // Create a mutable copy
@@ -82,6 +84,13 @@ export abstract class BaseQuestion {
             this.answers = [...this.originalAnswers];
         }
     }
+
+    getTextWithoutHTML() {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = this.text;
+        return tempDiv.textContent || tempDiv.innerText || '';
+    }
+
     abstract isCorrect(): boolean;
 }
 
@@ -121,27 +130,6 @@ export class Sequence extends BaseQuestion {
     }
 
     isCorrect() {
-        console.log(this);
-
-        /*
-        // 1. Get the correct sequence of answer IDs from the original, unshuffled list.
-        // This `originalAnswers` array is our "answer key" and is never shuffled.
-        // Example `trueAnswerIds`: [101, 102, 103]
-        const trueAnswerIds = this.originalAnswers.map(answer => answer.id);
-
-        // 2. Translate the user's selection from indices to actual answer IDs.
-        // `this.selected` holds the *indices* (e.g., 0, 1, 2) of the answers as they
-        // appear in the shuffled list that the user interacted with.
-        // We map each index to the corresponding answer in the shuffled `this.answers`
-        // array and then extract its stable `id`.
-        // Example: if `this.selected` is `[2, 0, 1]`, this will retrieve the IDs
-        // of the answers at those positions in the shuffled list.
-        const selectedAnswerIds = this.selected.map(index => this.answers[index].id);
-
-        // 3. Compare the user's sequence of IDs with the correct sequence.
-        // The `isEqual` function checks if both arrays contain the same IDs in the
-        // exact same order.
-        this.solved = isEqual(trueAnswerIds, selectedAnswerIds);*/
 
         if (this.answers.length !== this.originalAnswers.length) return false;
 
@@ -150,8 +138,6 @@ export class Sequence extends BaseQuestion {
 
         return ids1.every((id, index) => id === ids2[index]);
 
-        // 4. Return the final result (true or false).
-        return this.solved;
     }
 }
 
@@ -333,6 +319,7 @@ export class Quiz {
         for (var q of this.questions) {
             if (q.isCorrect()) {
                 points += 1;
+                q.correct = q.isCorrect();
             }
         }
         this.isEvaluated.set(true);
