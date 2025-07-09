@@ -1,5 +1,4 @@
 <script lang="ts">
-
     interface Props {
         ms: number;
         minHeight?: number;
@@ -7,12 +6,7 @@
         children?: import('svelte').Snippet;
     }
 
-    let {
-        ms,
-        minHeight = 0,
-        update = false,
-        children
-    }: Props = $props();
+    let { ms, minHeight = 0, update = false, children }: Props = $props();
 
     let node: HTMLElement = $state();
 
@@ -23,12 +17,8 @@
 
 {#key update}
     {#await wait(ms)}
-        <div
-            class="loading"
-            bind:this="{node}"
-            style="min-height:{minHeight}px;"
-        >
-            I will be the loading spinner
+        <div class="loading" bind:this={node} style="min-height:{minHeight}px;">
+            <div class="spinner"></div>
         </div>
     {:then resolved}
         {@render children?.()}
@@ -43,5 +33,19 @@
         justify-content: center;
         align-items: center;
         text-align: center;
+    }
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 6px solid var(--quizdown-color-primary);
+        border-top: 6px solid var(--quizdown-color-secondary);
+        border-radius: 50%;
+        animation: spin 0.3s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
     }
 </style>
