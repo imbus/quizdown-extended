@@ -121,10 +121,12 @@ export class Sequence extends BaseQuestion {
     }
 
     isCorrect() {
+        console.log(this);
+
+        /*
         // 1. Get the correct sequence of answer IDs from the original, unshuffled list.
         // This `originalAnswers` array is our "answer key" and is never shuffled.
         // Example `trueAnswerIds`: [101, 102, 103]
-        console.log(this);
         const trueAnswerIds = this.originalAnswers.map(answer => answer.id);
 
         // 2. Translate the user's selection from indices to actual answer IDs.
@@ -139,7 +141,14 @@ export class Sequence extends BaseQuestion {
         // 3. Compare the user's sequence of IDs with the correct sequence.
         // The `isEqual` function checks if both arrays contain the same IDs in the
         // exact same order.
-        this.solved = isEqual(trueAnswerIds, selectedAnswerIds);
+        this.solved = isEqual(trueAnswerIds, selectedAnswerIds);*/
+
+        if (this.answers.length !== this.originalAnswers.length) return false;
+
+        const ids1 = this.answers.map(obj => obj.id);
+        const ids2 = this.originalAnswers.map(obj => obj.id);
+
+        return ids1.every((id, index) => id === ids2[index]);
 
         // 4. Return the final result (true or false).
         return this.solved;
