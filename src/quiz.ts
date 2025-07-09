@@ -1,5 +1,4 @@
-import { writable, get } from 'svelte/store';
-import type { Writable } from 'svelte/store';
+import { writable, get, type Writable } from 'svelte/store';
 import autoBind from 'auto-bind';
 import type { Config } from './config.js';
 import quizdown from './quizdown.js';
@@ -33,6 +32,7 @@ export type QuestionType = 'MultipleChoice' | 'SingleChoice' | 'Sequence';
 export abstract class BaseQuestion {
     readonly text: string;
     answers: Array<Answer>;
+    readonly originalAnswers: Array<Answer>; // To preserve initial order
     readonly explanation: string;
     selected: Array<number>;
     solved: boolean;
@@ -59,7 +59,8 @@ export abstract class BaseQuestion {
         this.solved = false;
         this.showHint = writable(false);
         this.options = options;
-        this.answers = answers;
+        this.answers = [...answers]; // Create a mutable copy
+        this.originalAnswers = [...answers]; // Create a copy to preserve original order
         this.questionType = questionType;
         this.visited = false;
         autoBind(this);
@@ -76,7 +77,9 @@ export abstract class BaseQuestion {
         this.visited = false;
         this.showHint.set(false);
         if (this.options.shuffleAnswers) {
-            this.answers = shuffle(this.answers, this.answers.length);
+            this.answers = shuffle([...this.originalAnswers], this.originalAnswers.length);
+        } else {
+            this.answers = [...this.originalAnswers];
         }
     }
     abstract isCorrect(): boolean;
@@ -118,9 +121,27 @@ export class Sequence extends BaseQuestion {
     }
 
     isCorrect() {
-        // extract answer ids from answers
-        let trueAnswerIds = this.answers.map((answer) => answer.id);
-        this.solved = isEqual(trueAnswerIds.sort(), this.selected);
+        // 1. Get the correct sequence of answer IDs from the original, unshuffled list.
+        // This `originalAnswers` array is our "answer key" and is never shuffled.
+        // Example `trueAnswerIds`: [101, 102, 103]
+        console.log(this);
+        const trueAnswerIds = this.originalAnswers.map(answer => answer.id);
+
+        // 2. Translate the user's selection from indices to actual answer IDs.
+        // `this.selected` holds the *indices* (e.g., 0, 1, 2) of the answers as they
+        // appear in the shuffled list that the user interacted with.
+        // We map each index to the corresponding answer in the shuffled `this.answers`
+        // array and then extract its stable `id`.
+        // Example: if `this.selected` is `[2, 0, 1]`, this will retrieve the IDs
+        // of the answers at those positions in the shuffled list.
+        const selectedAnswerIds = this.selected.map(index => this.answers[index].id);
+
+        // 3. Compare the user's sequence of IDs with the correct sequence.
+        // The `isEqual` function checks if both arrays contain the same IDs in the
+        // exact same order.
+        this.solved = isEqual(trueAnswerIds, selectedAnswerIds);
+
+        // 4. Return the final result (true or false).
         return this.solved;
     }
 }
@@ -165,10 +186,8 @@ export class SingleChoice extends Choice {
 
     isCorrect(): boolean {
         // 1. Find the ID of the answer that is marked as correct.
-        // The .find() method gets the first answer object where `answer.correct` is true.
         const correctAnswer = this.answers.find(answer => answer.correct);
 
-        // If for some reason no correct answer is defined for this question, it's wrong.
         if (!correctAnswer) {
             this.solved = false;
             return false;
@@ -176,17 +195,14 @@ export class SingleChoice extends Choice {
         const correctAnswerId = correctAnswer.id;
 
         // 2. Find the ID of the answer the user selected.
-        // First, check if the user has selected anything.
         if (this.selected.length === 0) {
             this.solved = false;
             return false;
         }
 
-        // `this.selected[0]` gives us the INDEX of the choice in the shuffled array.
         const selectedIndex = this.selected[0];
         const selectedAnswer = this.answers[selectedIndex];
 
-        // If the selection is invalid, it's not correct.
         if (!selectedAnswer) {
             this.solved = false;
             return false;
@@ -297,6 +313,9 @@ export class Quiz {
         this.isEvaluated.set(false);
 
         this.questions.forEach((q) => q.reset());
+        if (this.config.shuffleQuestions) {
+            this.questions = shuffle(this.questions, this.config.nQuestions);
+        }
         return this.jump(0);
     }
 
@@ -304,13 +323,10 @@ export class Quiz {
         var points = 0;
         for (var q of this.questions) {
             if (q.isCorrect()) {
-                console.log(q);
                 points += 1;
-                console.log("points: " + points);
             }
         }
         this.isEvaluated.set(true);
-        console.log("points - method end: " + points);
         return points;
     }
 

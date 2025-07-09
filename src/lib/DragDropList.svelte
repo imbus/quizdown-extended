@@ -1,10 +1,20 @@
 <script lang="ts">
 	// In Svelte 5, declare the bindable prop with $props.
-	let { data } = $props<{ data: string[] }>();
+	let dataInternal = $state();
+	let { data = $bindable(), ...props } = $props()
+	
+
+	// Cannot use 'bind:' with this property. It is declared as non-bindable inside the component.
+    // To mark a property as bindable: 'let { data = $bindable() } = $props()'ts(2322)
+
 
 	// Use $state for local, reactive UI state.
 	let draggingIndex = $state(-1);
 	let dragOverIndex = $state(-1);
+
+	$effect(() => {
+		dataInternal = data.answers;
+	});
 
 	function handleDragStart(index: number) {
 		draggingIndex = index;
@@ -22,13 +32,14 @@
 			return;
 		}
 
-		const items = [...data];
+		const items = [...dataInternal];
 		const [draggedItem] = items.splice(draggingIndex, 1);
 		items.splice(dropIndex, 0, draggedItem);
 
 		// THE FIX: Simply assign the new array to the prop.
 		// Svelte's compiler handles updating the parent component from here.
-		data = items;
+		dataInternal = items;
+		data.answers = dataInternal;
 
 		resetDragState();
 	}
@@ -74,7 +85,7 @@
 </style>
 
 <div class="list-container" role="list">
-	{#each data as item, index (item)}
+	{#each dataInternal as item, index (item)}
 		<div
 			role="listitem"
 			draggable="true"

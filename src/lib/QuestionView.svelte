@@ -22,17 +22,7 @@
 
     const QuestionComponent = $derived(componentMap[question.questionType]);
 
-    // Debug function to inspect the question object
-    /*function inspectQuestion() {
-        console.log("Question object:", JSON.parse(JSON.stringify(question)));
-    }
-    
-    // Run the inspection once to see what we're working with
-    $effect(() => {
-        if (question) {
-            inspectQuestion();
-        }
-    });*/
+
 </script>
 
 <h3>
@@ -55,4 +45,4 @@
     </p>
 {/if}
 
-<QuestionComponent {question} />
+<QuestionComponent bind:question={question} />
