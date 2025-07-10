@@ -130,7 +130,7 @@ export class Sequence extends BaseQuestion {
     }
 
     isCorrect() {
-
+        console.log("isCorrect() - Sequence");
         if (this.answers.length !== this.originalAnswers.length) return false;
 
         const ids1 = this.answers.map(obj => obj.id);
@@ -143,6 +143,7 @@ export class Sequence extends BaseQuestion {
 
 class Choice extends BaseQuestion {
     isCorrect() {
+        console.log("isCorrect() - Base question");
         let trueAnswerIds = this.answers
             .filter((answer) => answer.correct)
             .map((answer) => answer.id);
@@ -180,6 +181,8 @@ export class SingleChoice extends Choice {
     }
 
     isCorrect(): boolean {
+
+        console.log("isCorrect() - Single Choice question");
         // 1. Find the ID of the answer that is marked as correct.
         const correctAnswer = this.answers.find(answer => answer.correct);
 
@@ -315,6 +318,7 @@ export class Quiz {
     }
 
     evaluate(): number {
+        console.log("Quiz evaluation");
         var points = 0;
         for (var q of this.questions) {
             if (q.isCorrect()) {

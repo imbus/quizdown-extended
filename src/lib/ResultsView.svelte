@@ -18,6 +18,8 @@
             score = quiz.evaluate();
             percent = Math.round((score / quiz.questions.length) * 100);
 
+            quiz.evaluate();
+
             // Log questions for debugging
             console.log(
                 'Results questions:',
@@ -25,6 +27,7 @@
             );
         }
     });
+
 </script>
 
 <div>
@@ -43,10 +46,10 @@
         </thead>
         <tbody>
             {#each quiz.questions as question, i}
-                <tr class={question.correct ? 'correct' : 'incorrect'}>
+                <tr class={question.isCorrect() ? 'correct' : 'incorrect'}>
                     <td class="id-column">{i + 1}.</td>
                     <td>
-                        {#if question.correct}
+                        {#if question.isCorrect()}
                             ✅
                         {:else}
                             ❌
