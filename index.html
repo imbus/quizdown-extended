@@ -114,7 +114,8 @@
       <p id="wrong"></p>
     </div>
   </div>
-  <script>
+  <script  type="module">
+    import quizdown from '/src/quizdown.js';
     const shadowHost = document.querySelector('.quizdown'); // host element
     quizdown.listenForStats(shadowHost, (event) => {
       document.getElementById('numberOfQuestions').innerText = "# of questions: " + event.numberOfQuestions;

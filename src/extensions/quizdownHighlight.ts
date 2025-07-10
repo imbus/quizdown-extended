@@ -25,6 +25,7 @@ hljs.registerLanguage('typescript', typescript);
 hljs.registerLanguage('html', xml);
 
 function highlighter(code, language) {
+    console.log("highlighter");
     const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
     return hljs.highlight(code, { language: validLanguage }).value;
 }
@@ -36,6 +37,7 @@ interface QuizdownHighlightExtension extends QuizdownExtension {
 
 let quizdownHighlight: QuizdownHighlightExtension = {
     setup: function (quizdown) {
+        console.log("setup");
         quizdown
             .getMarkedParser()
             .setOptions({ highlight: highlighter, langPrefix: 'hljs lang-' });
