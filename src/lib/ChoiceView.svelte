@@ -36,20 +36,6 @@
         }
     });
     
-    // Debug function to inspect the answers
-    /*function inspectAnswers() {
-        if (question && question.answers) {
-            console.log("Answers:", JSON.parse(JSON.stringify(question.answers)));
-        }
-    }
-    
-    // Run inspection once
-    $effect(() => {
-        if (question) {
-            inspectAnswers();
-        }
-    });*/
-    
     // Function to safely get answer HTML content
     function getAnswerHtml(answer) {
         if (!answer) return '';

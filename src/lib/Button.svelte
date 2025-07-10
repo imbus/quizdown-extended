@@ -1,12 +1,14 @@
 <script lang="ts">
     interface Props {
+        children: any;
         btnClass?: string;
         title?: string;
         disabled?: boolean;
         buttonAction: () => void;
     }
 
-    let { btnClass = "", title = "", disabled = false, buttonAction }: Props = $props();
+
+    let { children, btnClass = "", title = "", disabled = false, buttonAction }: Props = $props();
 </script>
 
 <button
@@ -15,7 +17,7 @@
     disabled={disabled}
     onclick={() => buttonAction()}
 >
-    <slot />
+    {@render children?.()}
 </button>
 
 <style>
@@ -39,6 +41,7 @@
     button:disabled {
         color: #ccc;
         cursor: not-allowed;
+        opacity: 0.25;
     }
 
     button:disabled:hover {

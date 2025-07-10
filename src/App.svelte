@@ -85,7 +85,6 @@
     }
     
     function showResults() {
-        console.log("show Results");
         try {
             if (quiz.jump(quiz.questions.length)) {
                 // Force evaluation

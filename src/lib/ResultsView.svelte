@@ -21,10 +21,10 @@
             quiz.evaluate();
 
             // Log questions for debugging
-            console.log(
+            /*console.log(
                 'Results questions:',
                 JSON.parse(JSON.stringify(quiz.questions))
-            );
+            );*/
         }
     });
 
