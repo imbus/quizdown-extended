@@ -3,6 +3,7 @@ import autoBind from 'auto-bind';
 import type { Config } from './config.js';
 import quizdown from './quizdown.js';
 
+
 function isEqual(a1: Array<number>, a2: Array<number>): boolean {
     return JSON.stringify(a1) === JSON.stringify(a2);
 }
@@ -281,12 +282,14 @@ export class Quiz {
             this.onResults.set(false);
             this.onLast.set(index == this.questions.length - 1);
             this.onFirst.set(index == 0);
+
             return true;
         } else if (index == this.questions.length) {
             // on results page
             this.onResults.set(true);
             this.onLast.set(false);
             this.index.set(index);
+
             return true;
         } else {
             return false;

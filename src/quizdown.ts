@@ -26,20 +26,20 @@ function register(extension: QuizdownExtension): Quizdown {
 function createApp(rawQuizdown: string, node: Element, config: Config): App {
     node.innerHTML = ''; // Clear the node content
 
-        let root: ShadowRoot;
+        /*let root: ShadowRoot;
         if (!!node.shadowRoot) {
             //clear root if it allready exists
             root = node.shadowRoot;
             root.innerHTML = '';
         } else {
             root = node.attachShadow({ mode: 'open' });
-        }
+        }*/
 
     try {
         const quiz = parseQuizdown(rawQuizdown, config);
 
         const app = mount(App, {
-            target: root, // Directly mount into the given node
+            target: node, // Directly mount into the given node
             intro: false,
             props: {
                 quiz: quiz,

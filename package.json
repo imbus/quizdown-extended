@@ -39,6 +39,8 @@
     "highlight.js": "^11.11.1",
     "katex": "^0.16.22",
     "marked": "^16.0.0",
+    "marked-highlight": "^2.2.2",
+    "shiki": "^3.7.0",
     "strip-indent": "^4.0.0",
     "svelte-dnd-action": "^0.9.63",
     "svelte-i18n": "^4.0.1",
