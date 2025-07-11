@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte'; // Make sure this is properly imported
+    import { createEventDispatcher, tick } from 'svelte'; // Make sure this is properly imported
     import { get } from 'svelte/store';
     import type { Quiz } from './quiz';
     import ProgressBar from './lib/ProgressBar.svelte';
@@ -56,14 +56,17 @@
         allQuestionsVisited = get(quiz.allVisited);
         evaluationDone = get(quiz.isEvaluated);
 
+        tick()
+        .then(() => {
+            highlightAllCodeBlocks();
+        });
+
         if (!showingResults && idxValue < quiz.questions.length) {
             currentQuestion = quiz.questions[idxValue];
             if (currentQuestion) {
                 currentHintShown = get(currentQuestion.showHint);
             }
         }
-
-        highlightAllCodeBlocks();
     }
 
     // Navigation functions with improved error handling
