@@ -4,7 +4,7 @@
     import type { Quiz } from './quiz';
     import ProgressBar from './lib/components/ProgressBar.svelte';
     import registerLanguages from './languages/i18n';
-    import { highlightAllCodeBlocks } from './lib/codeBlockHighlighter';
+    import { highlightAllCodeBlocks, registerTheme, registerLanguage } from './lib/codeBlockHighlighter';
     import Card from './lib/components/Card.svelte';
     import Credits from './lib/components/Credits.svelte';
     import SmoothResize from './lib/components/SmoothResize.svelte';
@@ -57,8 +57,11 @@
         evaluationDone = get(quiz.isEvaluated);
 
         tick()
-        .then(() => {
-            highlightAllCodeBlocks();
+        .then(async () => {
+            await highlightAllCodeBlocks();
+            await registerTheme("https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
+            await registerLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
+
         });
 
         if (!showingResults && idxValue < quiz.questions.length) {
