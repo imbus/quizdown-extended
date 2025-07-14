@@ -1,6 +1,6 @@
 import { writable, get, type Writable } from 'svelte/store';
 import autoBind from 'auto-bind';
-import type { Config } from './config.js';
+import type { Config } from './lib/config.js';
 import quizdown from './quizdown.js';
 
 

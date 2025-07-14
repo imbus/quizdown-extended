@@ -2,22 +2,22 @@
     import { createEventDispatcher, tick } from 'svelte'; // Make sure this is properly imported
     import { get } from 'svelte/store';
     import type { Quiz } from './quiz';
-    import ProgressBar from './lib/ProgressBar.svelte';
+    import ProgressBar from './lib/components/ProgressBar.svelte';
     import registerLanguages from './languages/i18n';
-    import { highlightAllCodeBlocks } from './codeBlockHighlighter';
-    import Card from './lib/Card.svelte';
-    import Credits from './lib/Credits.svelte';
-    import SmoothResize from './lib/SmoothResize.svelte';
-    import QuestionView from './lib/QuestionView.svelte';
-    import Row from './lib/Row.svelte';
-    import Button from './lib/Button.svelte';
+    import { highlightAllCodeBlocks } from './lib/codeBlockHighlighter';
+    import Card from './lib/components/Card.svelte';
+    import Credits from './lib/components/Credits.svelte';
+    import SmoothResize from './lib/components/SmoothResize.svelte';
+    import QuestionView from './lib/components/QuestionView.svelte';
+    import Row from './lib/components/Row.svelte';
+    import Button from './lib/components/Button.svelte';
     import { _ } from 'svelte-i18n';
-    import ResultsView from './lib/ResultsView.svelte';
-    import Animated from './lib/Animated.svelte';
-    import Hint from './lib/Hint.svelte';
+    import ResultsView from './lib/components/ResultsView.svelte';
+    import Animated from './lib/components/Animated.svelte';
+    import Hint from './lib/components/Hint.svelte';
     import { fly } from 'svelte/transition';
-    import Container from './lib/Container.svelte';
-    import Loading from './lib/Loading.svelte';
+    import Container from './lib/components/Container.svelte';
+    import Loading from './lib/components/Loading.svelte';
 
     interface Props {
         quiz: Quiz;

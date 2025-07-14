@@ -8,7 +8,7 @@ import {
     Sequence,
     Answer,
     type QuestionType,
-} from './quiz';
+} from '../quiz';
 import { Config, mergeAttributes } from './config';
 import marked from './customizedMarked';
 

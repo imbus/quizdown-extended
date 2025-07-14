@@ -1,8 +1,8 @@
 import { mount } from 'svelte';
 import App from './App.svelte';
-import parseQuizdown from './parser.js';
-import { Config } from './config.js';
-import marked from './customizedMarked.js';
+import parseQuizdown from './lib/parser.js';
+import { Config } from './lib/config.js';
+import marked from './lib/customizedMarked.js';
 import type { Quiz } from './quiz';
 
 export interface Quizdown {
