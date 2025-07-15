@@ -1,11 +1,15 @@
 import { createHighlighterCore, type HighlighterCore } from '@shikijs/core';
 import { createOnigurumaEngine } from '@shikijs/engine-oniguruma';
+import { getShadowRoot } from './shadowRootManager';
 
 let globalHighlighter: HighlighterCore | null = null;
 let initializationPromise: Promise<HighlighterCore> | null = null;
 
 // Set to keep track of loaded URLs (Themes & Languages)
 const loadedModules = new Set<string>();
+
+// Map to track loaded theme CSS by theme name
+const themeCssMap = new Map<string, string>();
 
 /**
  * Get singleton highlighter instance
@@ -16,7 +20,7 @@ export async function getHighlighterInstance(): Promise<HighlighterCore> {
 
   initializationPromise = (async () => {
     try {
-      const wasm = await import("shiki/wasm");
+      const wasm = await import('shiki/wasm');
       const highlighter = await createHighlighterCore({
         themes: [],
         langs: [],
@@ -50,8 +54,14 @@ export async function registerTheme(url: string): Promise<void> {
     const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
     const themeModule = await import(/* @vite-ignore */ blobUrl);
 
+    const theme = themeModule.default || themeModule;
     const highlighter = await getHighlighterInstance();
-    await highlighter.loadTheme(themeModule.default || themeModule);
+    await highlighter.loadTheme(theme);
+
+    if (typeof theme.css === 'string') {
+      const name = theme.name || url;
+      themeCssMap.set(name, theme.css);
+    }
 
     loadedModules.add(url);
   } catch (error) {
@@ -91,7 +101,21 @@ export async function highlightAllCodeBlocks(
   theme: string = 'catppuccin-latte'
 ): Promise<void> {
   const highlighter = await getHighlighterInstance();
-  const codeBlocks = root.querySelectorAll('code[class^="language-"]');
+  const codeBlocks = getShadowRoot()?.querySelectorAll('code[class^="language-"]');
+
+  console.log(codeBlocks); // find the shadow root
+  // Inject theme CSS into ShadowRoot once
+  if (root instanceof ShadowRoot && !root.querySelector(`style[data-shiki-theme="${theme}"]`)) {
+    const css = themeCssMap.get(theme);
+    if (css) {
+      const style = document.createElement('style');
+      style.setAttribute('data-shiki-theme', theme);
+      style.textContent = css;
+      root.appendChild(style);
+    } else {
+      console.warn(`No CSS found for theme "${theme}". Make sure it was provided in registerTheme().`);
+    }
+  }
 
   for (const code of Array.from(codeBlocks)) {
     const langClass = Array.from(code.classList).find(cls => cls.startsWith('language-'));

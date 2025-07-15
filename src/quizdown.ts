@@ -4,6 +4,7 @@ import parseQuizdown from './lib/parser.js';
 import { Config } from './lib/config.js';
 import marked from './lib/customizedMarked.js';
 import type { Quiz } from './quiz';
+import { createShadowRoot } from './lib/shadowRootManager';
 
 export interface Quizdown {
     register(extension: QuizdownExtension): Quizdown;
@@ -24,22 +25,13 @@ function register(extension: QuizdownExtension): Quizdown {
 }
 
 function createApp(rawQuizdown: string, node: Element, config: Config): App {
-    node.innerHTML = ''; // Clear the node content
-
-        /*let root: ShadowRoot;
-        if (!!node.shadowRoot) {
-            //clear root if it allready exists
-            root = node.shadowRoot;
-            root.innerHTML = '';
-        } else {
-            root = node.attachShadow({ mode: 'open' });
-        }*/
+    const root = createShadowRoot(node);
 
     try {
         const quiz = parseQuizdown(rawQuizdown, config);
 
         const app = mount(App, {
-            target: node, // Directly mount into the given node
+            target: root, // Directly mount into the given node
             intro: false,
             props: {
                 quiz: quiz,
