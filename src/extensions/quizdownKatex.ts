@@ -1,5 +1,5 @@
 import katex from 'katex';
-import type { QuizdownExtension } from '../quizdown.js';
+import type { IQuizdownExtension } from '../quizdown.js';
 
 interface KatexToken {
     type: 'katex';
@@ -35,7 +35,7 @@ let markedExtension = {
     },
 };
 
-let quizdownKatex: QuizdownExtension = {
+let quizdownKatex: IQuizdownExtension = {
     setup: function (quizdown) {
         // type definition seems outdated, because this is the correct usage
         // @ts-ignore

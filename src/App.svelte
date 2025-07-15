@@ -59,9 +59,6 @@
         tick()
         .then(async () => {
             await highlightAllCodeBlocks();
-            await registerTheme("https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
-            await registerLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
-
         });
 
         if (!showingResults && idxValue < quiz.questions.length) {
@@ -163,6 +160,8 @@
             node.style.setProperty('--quizdown-color-text', textColor);
             node.style.minHeight = `${minHeight}px`;
             //dispatchStats();
+
+            
         }
     });
 

@@ -5,41 +5,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quizdown Demo Page</title>
+  <style>
+    html {
+      font-family: sans-serif;
+    }
 
-  <!-- Vite will serve your TS/JS modules directly from /src -->
-  <script type="module">
-    import quizdown from '/src/quizdown.js';
-    import quizdownKatex from '/src/extensions/quizdownKatex.js';
-    //import quizdownHighlight from '/src/extensions/quizdownHighlight.js';-
+    body {
+      font-size: 1.1em;
+      line-height: 1.5;
+    }
 
-    // register your extensions and auto-start on every .quizdown element
-    quizdown
-      .register(quizdownKatex)
-      //.register(quizdownHighlight)
-      .init();
-  </script>
+    .container {
+      margin: auto;
+      max-width: 600px;
+    }
+
+    #stats p {
+      margin: 0.25em 0;
+    }
+  </style>
 </head>
-
-<style>
-  html {
-    font-family: sans-serif;
-  }
-
-  body {
-    font-size: 1.1em;
-    line-height: 1.5;
-  }
-
-  .container {
-    margin: auto;
-    max-width: 600px;
-  }
-</style>
 
 <body>
   <div class="container">
     <h1>Quizdown Demo Page</h1>
-    <div class="quizdown">
+
+    <div class="quizdown" id="quiz-container">
       ---
       shuffleAnswers: true
       shuffleQuestions: true
@@ -51,22 +42,19 @@
 
       #### What's the value of $x$?
 
-      This is what i mean:
+      This is what I mean:
       $$
-      x=\sqrt{\frac{9}{16}}
+      x = \sqrt{\frac{9}{16}}
       $$
 
-      > Also check out $\sqrt{x+2}$!
-
-      - [x] Try out: $x=0.75$
-      - [ ] $x=0.5$ could also *be correct*!
-      - [ ] perhaps $x=1$?
-      - [ ] $x=1.5$
+      - [x] $x = 0.75$
+      - [ ] $x = 0.5$
+      - [ ] $x = 1$
+      - [ ] $x = 1.5$
 
       #### What's the value of `x[3]`?
 
       ```python
-      # a python list
       x = [1, 2, 3, 4]
       ```
 
@@ -75,38 +63,21 @@
       - [ ] 3
       - [x] 4
 
-      #### <i>Is that italic</i>
+      #### Is that italic?
 
-      ```python
-      # a python list
-      x = [1, 2, 3, 4]
-      ```
-
-      - [x] Yes
-      - [x] Yup, it is
-      - [ ] No
+      - [ ] Yes
+      - [x] No
 
       #### Order the following letters
-
 
       1. a
       2. b
       3. c
       4. d
-
-      ## Please bring the following into sequence!
-
-      That's **super easy**!
-
-      > Three is larger than one...
-
-      1. One
-      2. Two
-      3. Three
-      4. Four
-      5. Five
     </div>
+
     <div id="stats">
+      <h2>Stats</h2>
       <p id="numberOfQuestions"></p>
       <p id="visited"></p>
       <p id="solved"></p>
@@ -114,16 +85,47 @@
       <p id="wrong"></p>
     </div>
   </div>
-  <script  type="module">
-    import quizdown from '/src/quizdown.js';
-    const shadowHost = document.querySelector('.quizdown'); // host element
-    quizdown.listenForStats(shadowHost, (event) => {
-      document.getElementById('numberOfQuestions').innerText = "# of questions: " + event.numberOfQuestions;
-      document.getElementById('visited').innerText = "visited: " + event.visited;
-      document.getElementById('solved').innerText = "solved: " + event.solved;
-      document.getElementById('right').innerText = "right: " + event.right;
-      document.getElementById('wrong').innerText = "wrong: " + event.wrong;
-    });
+
+  <script type="module">
+    import Quizdown from '/src/quizdown.ts';
+    import quizdownKatex from '/src/extensions/quizdownKatex.ts';
+
+    const quizdown = new Quizdown(); 
+
+    // Register extension
+    quizdown.register(quizdownKatex);
+
+    quizdown.getShikiInstance()
+    .then(async (instance) => {
+      console.log(instance);
+      await quizdown.registerShikiLanguage("");
+      await quizdown.registerShikiTheme("");
+    })
+
+
+window.addEventListener('load', () => {
+  const host = document.getElementById('quiz-container');
+  const rawQuizdown = host.innerHTML;
+  const config = { startOnLoad: false };
+
+  quizdown.createApp(rawQuizdown, host, config);
+
+  // Observe when the shadowRoot is populated
+  const observer = new MutationObserver(() => {
+    if (host.shadowRoot && host.shadowRoot.querySelector('quizdown-app')) {
+      quizdown.listenForStats(host, (stats) => {
+        document.getElementById('numberOfQuestions').innerText = "# of questions: " + stats.numberOfQuestions;
+        document.getElementById('visited').innerText = "Visited: " + stats.visited;
+        document.getElementById('solved').innerText = "Solved: " + stats.solved;
+        document.getElementById('right').innerText = "Right: " + stats.right;
+        document.getElementById('wrong').innerText = "Wrong: " + stats.wrong;
+      });
+      observer.disconnect(); // Stop observing after it's done
+    }
+  });
+
+  observer.observe(host, { childList: true, subtree: true });
+});
   </script>
 </body>
 

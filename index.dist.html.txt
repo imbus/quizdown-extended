@@ -25,10 +25,7 @@
 
   <script>
 
-    Quizdown
-      // .register(quizdownKatex)
-      // .register(quizdownHighlight)
-      .init();
+    //Quizdown.init();
   </script>
 </head>
 
@@ -111,7 +108,20 @@
   </div>
 
   <script>
-    
+
+    const quizdown = new Quizdown();
+    console.log(quizdown);
+
+    quizdown.init();
+
+    quizdown.getShikiInstance()
+      .then(async (instance) => {
+        console.log(instance);
+        await quizdown.registerShikiLanguage("");
+        await quizdown.registerShikiTheme("");
+      })
+
+    /*
     const shadowHost = document.querySelector('.quizdown');
     quizdown.listenForStats(shadowHost, (event) => {
       document.getElementById('numberOfQuestions').innerText = "# of questions: " + event.numberOfQuestions;
@@ -119,8 +129,52 @@
       document.getElementById('solved').innerText = "solved: " + event.solved;
       document.getElementById('right').innerText = "right: " + event.right;
       document.getElementById('wrong').innerText = "wrong: " + event.wrong;
+    });*/
+
+    window.addEventListener('load', () => {
+      const config = { startOnLoad: false };
+
+      // Safely wait for #quiz-container to exist in the DOM
+      const waitForQuizContainer = () => {
+        const host = document.getElementsByClassName('quizdown')[0];
+
+        console.log(host);
+        if (!host) {
+          // Wait until #quiz-container exists
+          requestAnimationFrame(waitForQuizContainer);
+          return;
+        }
+
+        // Now that it exists, observe it for when content is added
+        const observer = new MutationObserver((mutations, obs) => {
+          if (host.innerHTML.trim().length > 0) {
+            obs.disconnect(); // Stop watching
+
+            const rawQuizdown = host.innerHTML;
+
+            try {
+              console.log("start listening");
+
+              quizdown.listenForStats(host, (stats) => {
+                document.getElementById('numberOfQuestions').innerText = "# of questions: " + stats.numberOfQuestions;
+                document.getElementById('visited').innerText = "Visited: " + stats.visited;
+                document.getElementById('solved').innerText = "Solved: " + stats.solved;
+                document.getElementById('right').innerText = "Right: " + stats.right;
+                document.getElementById('wrong').innerText = "Wrong: " + stats.wrong;
+              });
+            } catch (err) {
+              console.error("Failed to render quiz:", err);
+            }
+          }
+        });
+
+        // Watch for changes to child elements of the host
+        observer.observe(host, { childList: true, subtree: true });
+      };
+
+      waitForQuizContainer();
     });
-  </script°>
+  </script>
 </body>
 
 </html>
