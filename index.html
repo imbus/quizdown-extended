@@ -63,6 +63,17 @@
       - [ ] 3
       - [x] 4
 
+      #### What's the value of `x[3]`?
+
+      ```javascript
+      const x = [1, 2, 3, 4]
+      ```
+
+      - [ ] 1
+      - [ ] 2
+      - [ ] 3
+      - [x] 4
+
       #### Is that italic?
 
       - [ ] Yes
@@ -92,13 +103,12 @@
 
     const quizdown = new Quizdown();
 
-    // Register extension
-    quizdown.register(quizdownKatex);
-
     quizdown.getShikiInstance()
       .then(async (instance) => {
-        await quizdown.registerShikiLanguage("");
-        await quizdown.registerShikiTheme("");
+        await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
+        await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/javascript.mjs");
+        await quizdown.registerShikiTheme("catppuccin-latte", "light", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
+        await quizdown.registerShikiTheme("catppuccin-mocha", "dark", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-mocha.mjs");
       })
 
 

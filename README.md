@@ -157,6 +157,6 @@ You can register multiple handlers for each hook.
 For details on hook data types, see the source or type definitions.
 
 ### Options
-See here: (docs/options.md)[docs/options.md]
+See here: [docs/options.md](docs/options.md)
 
 ---

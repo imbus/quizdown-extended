@@ -5,8 +5,15 @@ import { getShadowRoot } from './shadowRootManager';
 let globalHighlighter: HighlighterCore | null = null;
 let initializationPromise: Promise<HighlighterCore> | null = null;
 
-// Set to keep track of loaded URLs (Themes & Languages)
-const loadedModules = new Set<string>();
+type ThemeEntry = {
+  url: string;
+  name: string
+}
+
+// Set to keep track of loaded URLs
+const loadedThemes = new Map<string, ThemeEntry>();
+const loadedLanguages = new Set<string>();
+
 
 // Map to track loaded theme CSS by theme name
 const themeCssMap = new Map<string, string>();
@@ -42,8 +49,8 @@ export async function getHighlighterInstance(): Promise<HighlighterCore> {
 /**
  * Load theme if not already loaded
  */
-export async function registerTheme(url: string): Promise<void> {
-  if (loadedModules.has(url)) {
+export async function registerTheme(name: string, type: "light" | "dark", url: string): Promise<void> {
+  if (loadedThemes.has(type)) {
     return;
   }
 
@@ -62,17 +69,19 @@ export async function registerTheme(url: string): Promise<void> {
       themeCssMap.set(name, theme.css);
     }
 
-    loadedModules.add(url);
+    const entry: ThemeEntry = {url: url, name: name}
+    loadedThemes.set(type, entry);
   } catch (error) {
     console.error(`Error loading theme from ${url}:`, error);
   }
+
 }
 
 /**
  * Load language if not already loaded
  */
 export async function registerLanguage(url: string): Promise<void> {
-  if (loadedModules.has(url)) {
+  if (loadedLanguages.has(url)) {
     return;
   }
 
@@ -85,7 +94,7 @@ export async function registerLanguage(url: string): Promise<void> {
     const highlighter = await getHighlighterInstance();
     await highlighter.loadLanguage(langModule.default || langModule);
 
-    loadedModules.add(url);
+    loadedLanguages.add(url);
   } catch (error) {
     console.error(`Error loading language from ${url}:`, error);
   }
@@ -96,21 +105,21 @@ export async function registerLanguage(url: string): Promise<void> {
  */
 export async function highlightAllCodeBlocks(
   root: ShadowRoot | Document | HTMLElement = document,
-  theme: string = 'catppuccin-latte'
+  themes: Map<"light" | "dark", ThemeEntry> = loadedThemes
 ): Promise<void> {
   const highlighter = await getHighlighterInstance();
   const codeBlocks = getShadowRoot()?.querySelectorAll('code[class^="language-"]');
 
   // Inject theme CSS into ShadowRoot once
   if (root instanceof ShadowRoot && !root.querySelector(`style[data-shiki-theme="${theme}"]`)) {
-    const css = themeCssMap.get(theme);
+    const css = themeCssMap.get(themes);
     if (css) {
       const style = document.createElement('style');
       style.setAttribute('data-shiki-theme', theme);
       style.textContent = css;
       root.appendChild(style);
     } else {
-      console.warn(`No CSS found for theme "${theme}". Make sure it was provided in registerTheme().`);
+      console.warn(`No CSS found for theme. Make sure it was provided in registerTheme().`);
     }
   }
 
@@ -120,7 +129,14 @@ export async function highlightAllCodeBlocks(
     if (!lang || !code.textContent) continue;
 
     try {
-      const html = await highlighter.codeToHtml(code.textContent, { lang, theme });
+      const html = await highlighter.codeToHtml(code.textContent, {
+        lang,
+        themes: {
+          light: themes.get("light").name,
+          dark: themes.get("dark").name
+        },
+        defaultColor: 'light-dark()', 
+      });
       const container = document.createElement('div');
       container.innerHTML = html;
       const pre = container.querySelector('pre');

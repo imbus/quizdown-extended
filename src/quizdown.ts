@@ -17,7 +17,7 @@ export interface IQuizdown {
     getMarkedParser(): typeof marked;
     getShikiInstance(): Promise<HighlighterCore>;
     registerShikiLanguage(url: string): void;
-    registerShikiTheme(url: string): void;
+    registerShikiTheme(name: string, type: "light" | "dark", url: string): void;
 }
 
 export interface IQuizdownExtension {
@@ -106,13 +106,11 @@ class Quizdown implements IQuizdown {
     }
 
     async registerShikiLanguage(url: string): Promise<void> {
-        console.log("register theme");
-        await registerLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
+        await registerLanguage(url);
     }
 
-    async registerShikiTheme(url: string): Promise<void> {
-        console.log("register lang");
-        await registerTheme("https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
+    async registerShikiTheme(name: string, type: "light" | "dark", url: string): Promise<void> {
+        await registerTheme(name, type, url);
     }
 
     getMarkedParser(): typeof marked {
