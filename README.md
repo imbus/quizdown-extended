@@ -1,47 +1,162 @@
-# Svelte + TS + Vite
+# Quizdown Extended
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+A fork from [bonartm/quizdown-js](https://github.com/bonartm/quizdown-js) with more features.
+> The Katex-extension is currently not supported
 
-## Recommended IDE Setup
+## Usage
+Add a div with the class quizdown there are questions inside
+``` html
+    <div class="quizdown" id="quiz-container">
+      ---
+      shuffleAnswers: true
+      shuffleQuestions: true
+      nQuestions: 5
+      passingGrade: 80
+      customPassMsg: You have Passed!
+      customFailMsg: You have not passed
+      ---
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+      ```python
+      x = [1, 2, 3, 4]
+      ```
 
-## Need an official Svelte framework?
+      - [ ] 1
+      - [ ] 2
+      - [ ] 3
+      - [x] 4
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
-
-## Technical considerations
-
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+    </div>
 ```
+
+### ESM
+> See the example in `index.html`
+``` html
+<script type="module">
+  import Quizdown from '/src/quizdown.ts';
+  import quizdownKatex from '/src/extensions/quizdownKatex.ts';
+  const quizdown = new Quizdown();
+  // Register extension
+  quizdown.register(quizdownKatex);
+ quizdown.getShikiInstance()
+    .then(async (instance) => {
+      await quizdown.registerShikiLanguage("");
+      await quizdown.registerShikiTheme("");
+    })
+ window.addEventListener('load', () => {
+    const host = document.getElementById('quiz-container');
+    const rawQuizdown = host.innerHTML;
+    const config = { startOnLoad: false };
+   quizdown.createApp(rawQuizdown, host, config);
+ });
+</script>
+```
+### IIFE
+> See the example in `index.dist.html.txt`
+  <script type="module">
+    import Quizdown from '/src/quizdown.ts';
+    import quizdownKatex from '/src/extensions/quizdownKatex.ts';
+
+    const quizdown = new Quizdown();
+
+    quizdown.getShikiInstance()
+      .then(async (instance) => {
+        await quizdown.registerShikiLanguage("");
+        await quizdown.registerShikiTheme("");
+      })
+
+    window.addEventListener('load', () => {
+      const host = document.getElementById('quiz-container');
+      const rawQuizdown = host.innerHTML;
+      const config = { startOnLoad: false };
+
+      quizdown.createApp(rawQuizdown, host, config);
+    });
+  </script>
+
+## How to Write the Questions
+
+See [docs/syntax.md](docs/syntax.md)
+
+## API
+
+### Hooks
+
+Quizdown Extended provides several hooks that let you respond to quiz events.  
+You can register your functions to these hooks using the exposed API:
+
+#### Available Hooks
+
+- `quizdown.hooks.onQuizCreate(fn)`
+  - Called when the quiz is initialized and created.
+  - **Signature:** `() => void`
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizCreate(() => {
+      console.log("Quiz created");
+    });
+    ```
+
+- `quizdown.hooks.onQuizQuestionChange(fn)`
+  - Called whenever the user switches to a different question.
+  - **Signature:** `(info: onQuestionChangeType) => void`
+  - `info` contains details about the current question, such as its index and state.
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizQuestionChange((info) => {
+      console.log("Current question changed:", info);
+    });
+    ```
+
+- `quizdown.hooks.onQuizReset(fn)`
+  - Called when the quiz is reset.
+  - **Signature:** `() => void`
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizReset(() => {
+      alert("Quiz has been reset!");
+    });
+    ```
+
+- `quizdown.hooks.onShowResults(fn)`
+  - Called when quiz results are shown (before the quiz is finished).
+  - **Signature:** `(stats: quizStats) => void`
+  - `stats` contains statistics about the quiz (number of questions, answers, etc).
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onShowResults((stats) => {
+      console.log("Results shown:", stats);
+    });
+    ```
+
+- `quizdown.hooks.onQuizFinish(fn)`
+  - Called when the user finishes the quiz.
+  - **Signature:** `(stats: quizStats) => void`
+  - `stats` contains final statistics: number of questions, solved, right, wrong, etc.
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizFinish((e) => {
+      document.getElementById('numberOfQuestions').innerText = "# of questions: " + e.numberOfQuestions;
+      document.getElementById('visited').innerText = "Visited: " + e.visited;
+      document.getElementById('solved').innerText = "Solved: " + e.solved;
+      document.getElementById('right').innerText = "Right: " + e.right;
+      document.getElementById('wrong').innerText = "Wrong: " + e.wrong;
+    });
+    ```
+
+- `quizdown.hooks.onShowHint(fn)`
+  - Called when a hint is shown to the user.
+  - **Signature:** `() => void`
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onShowHint(() => {
+      console.log("A hint was revealed!");
+    });
+    ```
+
+You can register multiple handlers for each hook.  
+For details on hook data types, see the source or type definitions.
+
+### Options
+See here: (docs/options.md)[docs/options.md]
+
+---

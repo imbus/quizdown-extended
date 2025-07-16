@@ -90,35 +90,35 @@
     import Quizdown from '/src/quizdown.ts';
     import quizdownKatex from '/src/extensions/quizdownKatex.ts';
 
-    const quizdown = new Quizdown(); 
+    const quizdown = new Quizdown();
 
     // Register extension
     quizdown.register(quizdownKatex);
 
     quizdown.getShikiInstance()
-    .then(async (instance) => {
-      await quizdown.registerShikiLanguage("");
-      await quizdown.registerShikiTheme("");
-    })
+      .then(async (instance) => {
+        await quizdown.registerShikiLanguage("");
+        await quizdown.registerShikiTheme("");
+      })
 
 
-window.addEventListener('load', () => {
-  const host = document.getElementById('quiz-container');
-  const rawQuizdown = host.innerHTML;
-  const config = { startOnLoad: false };
+    window.addEventListener('load', () => {
+      const host = document.getElementById('quiz-container');
+      const rawQuizdown = host.innerHTML;
+      const config = { startOnLoad: false };
 
 
-  quizdown.createApp(rawQuizdown, host, config);
-  
-  quizdown.hooks.onQuizFinish((e) => {
+      quizdown.createApp(rawQuizdown, host, config);
+
+      quizdown.hooks.onQuizFinish((e) => {
         document.getElementById('numberOfQuestions').innerText = "# of questions: " + e.numberOfQuestions;
         document.getElementById('visited').innerText = "Visited: " + e.visited;
         document.getElementById('solved').innerText = "Solved: " + e.solved;
         document.getElementById('right').innerText = "Right: " + e.right;
         document.getElementById('wrong').innerText = "Wrong: " + e.wrong;
-  })
+      })
 
-});
+    });
   </script>
 </body>
 
