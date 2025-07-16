@@ -97,7 +97,6 @@
 
     quizdown.getShikiInstance()
     .then(async (instance) => {
-      console.log(instance);
       await quizdown.registerShikiLanguage("");
       await quizdown.registerShikiTheme("");
     })
@@ -108,23 +107,17 @@ window.addEventListener('load', () => {
   const rawQuizdown = host.innerHTML;
   const config = { startOnLoad: false };
 
+
   quizdown.createApp(rawQuizdown, host, config);
+  
+  quizdown.hooks.onQuizFinish((e) => {
+        document.getElementById('numberOfQuestions').innerText = "# of questions: " + e.numberOfQuestions;
+        document.getElementById('visited').innerText = "Visited: " + e.visited;
+        document.getElementById('solved').innerText = "Solved: " + e.solved;
+        document.getElementById('right').innerText = "Right: " + e.right;
+        document.getElementById('wrong').innerText = "Wrong: " + e.wrong;
+  })
 
-  // Observe when the shadowRoot is populated
-  const observer = new MutationObserver(() => {
-    if (host.shadowRoot && host.shadowRoot.querySelector('quizdown-app')) {
-      quizdown.listenForStats(host, (stats) => {
-        document.getElementById('numberOfQuestions').innerText = "# of questions: " + stats.numberOfQuestions;
-        document.getElementById('visited').innerText = "Visited: " + stats.visited;
-        document.getElementById('solved').innerText = "Solved: " + stats.solved;
-        document.getElementById('right').innerText = "Right: " + stats.right;
-        document.getElementById('wrong').innerText = "Wrong: " + stats.wrong;
-      });
-      observer.disconnect(); // Stop observing after it's done
-    }
-  });
-
-  observer.observe(host, { childList: true, subtree: true });
 });
   </script>
 </body>

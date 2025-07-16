@@ -74,6 +74,7 @@
         try {
             if (quiz.next()) {
                 updateUIState();
+                dispatchHook("onQuizQuestionChange", {direction: "forward" });
             }
         } catch (err) {
             console.error('Navigation error:', err);
@@ -84,6 +85,7 @@
         try {
             if (quiz.previous()) {
                 updateUIState();
+                dispatchHook("onQuizQuestionChange", {direction: "backward" });
             }
         } catch (err) {
             console.error('Navigation error:', err);
@@ -95,6 +97,8 @@
             if (quiz.jump(quiz.questions.length)) {
                 // Force evaluation
                 evaluationDone = true;
+
+                dispatchHook("onShowResults", quiz.getStats());
                 updateUIState();
             }
         } catch (err) {
@@ -107,6 +111,8 @@
             reloaded = !reloaded;
             if (quiz.reset()) {
                 evaluationDone = false;
+
+                dispatchHook("onQuizReset");
                 updateUIState();
             }
         } catch (err) {
@@ -118,14 +124,20 @@
         if (currentQuestion) {
             currentQuestion.enableHint();
             currentHintShown = true;
+            dispatchHook("onShowHint");
         }
     }
 
     // Modified dispatch stats to handle validation results
-    const dispatchStats = () => {
+    const dispatchHook = (eventType: string, details: object | undefined = undefined) => {
+        const eventDetails = {
+            eventType: eventType,
+            details: details
+        }
+
         try {
-            const event = new CustomEvent('quizdown-stats', {
-                detail: quiz.getStats(),
+            const event = new CustomEvent('quizdown-event', {
+                detail: eventDetails,
                 bubbles: true,
                 composed: true,
             });
@@ -134,7 +146,7 @@
                 node.dispatchEvent(event);
             }
         } catch (err) {
-            console.error('Stats dispatch error:', err);
+            console.error('Event dispatch error:', err);
         }
     };
 
@@ -168,7 +180,7 @@
     // Effect for results tracking
     $effect(() => {
         if (showingResults && evaluationDone) {
-            dispatchStats();
+            dispatchHook("onQuizFinish", quiz.getStats());
         }
     });
 </script>

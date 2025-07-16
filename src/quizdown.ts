@@ -7,6 +7,7 @@ import type { Quiz } from './quiz';
 import { createShadowRoot } from './lib/shadowRootManager';
 import type { HighlighterCore } from 'shiki';
 import { getHighlighterInstance, registerLanguage, registerTheme } from './lib/codeBlockHighlighter';
+import { QuizdownHooks } from './quizdownHooks';
 
 export interface IQuizdown {
     register(extension: IQuizdownExtension): IQuizdown;
@@ -17,7 +18,6 @@ export interface IQuizdown {
     getShikiInstance(): Promise<HighlighterCore>;
     registerShikiLanguage(url: string): void;
     registerShikiTheme(url: string): void;
-    listenForStats(quizdownNode: HTMLElement, eventHandler: Function): void;
 }
 
 export interface IQuizdownExtension {
@@ -26,6 +26,9 @@ export interface IQuizdownExtension {
 
 class Quizdown implements IQuizdown {
     private globalConfig: Config | null = null;
+    public hooks: QuizdownHooks = new QuizdownHooks();
+    private hookTrigger = this.hooks.getInternalAPI();
+
 
     register(extension: IQuizdownExtension): IQuizdown {
         extension.setup(this as IQuizdown);
@@ -46,14 +49,30 @@ class Quizdown implements IQuizdown {
                 },
             });
 
-            // Listen for quiz-stats event from shadow DOM and re-emit it from the host
-            node.addEventListener('quiz-stats', (e: Event) => {
-                const customEvent = e as CustomEvent;
-                const statsEvent = new CustomEvent('quizdown-stats', {
-                    detail: customEvent.detail,
-                });
-                node.dispatchEvent(statsEvent);
+            node.addEventListener('quizdown-event', (e: Event) => {
+                switch (e.detail.eventType) {
+                    case "onQuizQuestionChange":
+                        this.hookTrigger.triggerQuizQuestionChange(e.detail.details);
+                        break;
+                    case "onQuizReset":
+                        this.hookTrigger.triggerQuizReset();
+                        break;
+                    case "onShowResults":
+                        this.hookTrigger.triggerShowResults(e.detail.details);
+                        break;
+                    case "onQuizFinish":
+                        this.hookTrigger.triggerQuizFinish(e.detail.details);
+                        break;
+                    case "onShowHint":
+                        this.hookTrigger.triggerShowHint();
+                        break;
+                    default:
+                        console.error("Unkown event");
+                        break;
+                }
             });
+
+            this.hookTrigger.triggerCreate();
 
             return app;
         } catch (e) {
@@ -82,12 +101,6 @@ class Quizdown implements IQuizdown {
         }
     }
 
-    listenForStats(quizdownNode: HTMLElement, eventHandler: Function): void {
-        quizdownNode.addEventListener('quizdown-stats', (event) => {
-            eventHandler((event as CustomEvent).detail);
-        });
-    }
-
     getShikiInstance(): Promise<HighlighterCore> {
         return getHighlighterInstance();
     }
@@ -100,30 +113,6 @@ class Quizdown implements IQuizdown {
     async registerShikiTheme(url: string): Promise<void> {
         console.log("register lang");
         await registerTheme("https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
-    }
-
-    onQuizCreate(callback: () => void): void {
-        callback();
-    }
-
-    onQuizLoading(callback: () => void): void {
-        callback();
-    }
-
-    onQuizStarted(callback: () => void): void {
-        callback();
-    }
-
-    onQuestionChangeStarted(callback: () => void): void {
-        callback();
-    }
-
-    onQuizFinish(callback: () => void): void {
-        callback();
-    }
-
-    onQuizEvaluated(callback: () => void): void {
-        callback();
     }
 
     getMarkedParser(): typeof marked {

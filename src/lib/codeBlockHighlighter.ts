@@ -44,7 +44,6 @@ export async function getHighlighterInstance(): Promise<HighlighterCore> {
  */
 export async function registerTheme(url: string): Promise<void> {
   if (loadedModules.has(url)) {
-    console.log(`Theme already loaded: ${url}`);
     return;
   }
 
@@ -74,7 +73,6 @@ export async function registerTheme(url: string): Promise<void> {
  */
 export async function registerLanguage(url: string): Promise<void> {
   if (loadedModules.has(url)) {
-    console.log(`Language already loaded: ${url}`);
     return;
   }
 
@@ -103,7 +101,6 @@ export async function highlightAllCodeBlocks(
   const highlighter = await getHighlighterInstance();
   const codeBlocks = getShadowRoot()?.querySelectorAll('code[class^="language-"]');
 
-  console.log(codeBlocks); // find the shadow root
   // Inject theme CSS into ShadowRoot once
   if (root instanceof ShadowRoot && !root.querySelector(`style[data-shiki-theme="${theme}"]`)) {
     const css = themeCssMap.get(theme);

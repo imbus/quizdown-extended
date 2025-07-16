@@ -5,7 +5,6 @@ function fetch(
   // Check if the URL is in sessionStorage
   const cachedData = sessionStorage.getItem(url);
   if (cachedData) {
-    console.log('Returning cached theme from sessionStorage');
     return Promise.resolve(JSON.parse(cachedData));
   }
 
