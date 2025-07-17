@@ -49,9 +49,11 @@ Add a div with the class quizdown there are questions inside
    quizdown.createApp(rawQuizdown, host, config);
  });
 </script>
+
 ```
 ### IIFE
 > See the example in `index.dist.html.txt`
+``` html
   <script type="module">
     import Quizdown from '/src/quizdown.ts';
     import quizdownKatex from '/src/extensions/quizdownKatex.ts';
@@ -72,12 +74,38 @@ Add a div with the class quizdown there are questions inside
       quizdown.createApp(rawQuizdown, host, config);
     });
   </script>
+```
 
 ## How to Write the Questions
 
 See [docs/syntax.md](docs/syntax.md)
 
 ## API
+
+### Load themes and languages
+
+You can register as many languages as you want and one theme for the dark and one for the light mode.  
+``` javascript
+quizdown.getShikiInstance()
+  .then(async (instance) => {
+    console.log(instance);
+
+    // Register languages (parameter: url to the language file. You can find them here: https://www.jsdelivr.com/package/npm/@shikijs/langs?tab=files&path=dist)
+    await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
+    await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/javascript.mjs");
+
+/*
+ Registering Themes
+   To register a theme, provide the following parameters:
+   1. **Theme Name**: Specify the name of the theme (e.g., 'catppuccin-latte', 'github-dark', if you get it from jsdelivr it is the filename).
+   2. **Theme Type**: Indicate whether the theme is 'light' or 'dark' mode.
+   3. **URL**: Provide the URL of the theme file. You can find available themes and their URLs on jsdelivr at:
+   https://www.jsdelivr.com/package/npm/@shikijs/themes?tab=files&path=dist
+*/
+    await quizdown.registerShikiTheme("catppuccin-latte", "light", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
+    await quizdown.registerShikiTheme("catppuccin-mocha", "dark", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-mocha.mjs");
+  })
+```
 
 ### Hooks
 
@@ -160,3 +188,10 @@ For details on hook data types, see the source or type definitions.
 See here: [docs/options.md](docs/options.md)
 
 ---
+
+# Todo
+- [ ] Improve doucmentation
+- [ ] Refactor some parts
+- [ ] Remove or reimplement the Katex-support
+- [ ] Make bundle size smaller
+- [ ] Put all languages except english in their own files that the user can load
