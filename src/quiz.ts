@@ -2,29 +2,11 @@ import { writable, get, type Writable } from 'svelte/store';
 import autoBind from 'auto-bind';
 import type { Config } from './lib/config.js';
 import quizdown from './quizdown.js';
-
+import { isEqualArray } from './lib/utils/arrayComparison'
+import { shuffle } from './lib/utils/shuffle';
 
 function isEqual(a1: Array<number>, a2: Array<number>): boolean {
-    return JSON.stringify(a1) === JSON.stringify(a2);
-}
-
-function shuffle(array: Array<any>, n: number | undefined): Array<any> {
-    // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-    let currentIndex = array.length,
-        temporaryValue,
-        randomIndex;
-
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-        // Pick a remaining element...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        // And swap it with the current element.
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
-    }
-    return array.slice(0, n);
+    return isEqualArray(a1, a2);
 }
 
 // we need to reference the classes in the svelte app despite minifaction of class names
@@ -53,7 +35,7 @@ export abstract class BaseQuestion {
         options: Config
     ) {
         if (answers.length === 0) {
-            throw 'no answers for question provided';
+            throw new Error('no answers for question provided');
         }
         this.text = text;
         this.explanation = explanation;
@@ -175,7 +157,7 @@ export class SingleChoice extends Choice {
         super(text, explanation, hint, answers, 'SingleChoice', options);
         let nCorrect = this.answers.filter((answer) => answer.correct).length;
         if (nCorrect > 1) {
-            throw 'Single Choice questions can not have more than one correct answer.';
+            throw new Error('Single Choice questions can not have more than one correct answer.');
         }
     }
 
@@ -245,7 +227,7 @@ export class Quiz {
             this.questions = shuffle(this.questions, this.config.nQuestions);
         }
         if (this.questions.length == 0) {
-            throw 'No questions for quiz provided';
+            throw new Error('No questions for quiz provided');
         }
         // setup first question
         this.active = writable(this.questions[0]);
@@ -304,7 +286,7 @@ export class Quiz {
         return this.jump(get(this.index) - 1);
     }
 
-    reset(): Boolean {
+    reset(): boolean {
         this.onLast.set(false);
         this.onResults.set(false);
         this.allVisited.set(false);

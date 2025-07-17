@@ -195,3 +195,4 @@ See here: [docs/options.md](docs/options.md)
 - [ ] Remove or reimplement the Katex-support
 - [ ] Make bundle size smaller
 - [ ] Put all languages except english in their own files that the user can load
+- [ ] Fix all warnings and typescript errors

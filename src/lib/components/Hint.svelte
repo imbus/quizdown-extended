@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade } from 'svelte/transition';
     interface Props {
-        show: Boolean;
+        show: boolean;
         hint: string;
     }
 
