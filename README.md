@@ -1,120 +1,198 @@
-# quizdown 
+# Quizdown Extended
 
-> Markdownish syntax to instantly create simple interactive quiz apps for your static website.
-
-I'm working on this project in my free time to learn more about modern web development and languages. This is a toy project and should not be used in serious projects for now. 
-
-### 🚀 Try the [quizdown live editor](https://bonartm.github.io/quizdown-live-editor/)
-
-- supports markdown text formatting, images, syntax highlighting and math rendering.
-- different [quiz-types](./docs/syntax.md): single-choice, multiple-choice, sequence.
-- support for [hints and explanations](./docs/syntax.md#hints-and-comments).
-- [options](./docs/options.md) for color theme, question shuffling, localization.
-- can be easily included in any website, static site generator or [other web projects](./docs/module_import.md).
-- mobile friendly with touch support for all question types.
+A fork from [bonartm/quizdown-js](https://github.com/bonartm/quizdown-js) with more features.
+> The Katex-extension is currently not supported
 
 ## Usage
+Add a div with the class quizdown there are questions inside
+``` html
+    <div class="quizdown" id="quiz-container">
+      ---
+      shuffleAnswers: true
+      shuffleQuestions: true
+      nQuestions: 5
+      passingGrade: 80
+      customPassMsg: You have Passed!
+      customFailMsg: You have not passed
+      ---
 
-quizdown is easy to setup and best used in combination with existing static site generators like *Jekyll*, *Hugo* or *Sphinx*. Check out the extensions
-[hugo-quiz](https://github.com/bonartm/hugo-quiz) and [sphinxcontrib-quizdown](https://github.com/bonartm/sphinxcontrib-quizdown).
+      ```python
+      x = [1, 2, 3, 4]
+      ```
 
-### 📚 [Documentation](./docs/)
+      - [ ] 1
+      - [ ] 2
+      - [ ] 3
+      - [x] 4
 
-
-
-## Stand-alone Example
-
-
-To keep the bundle size low, syntax highlighting and math rendering are implemented in separate extensions that can be loaded and registered manually if needed: 
-
-```html
-<head>
-	...
-    <script src="./build/quizdown.js"></script>
-	<script src="./build/extensions/quizdownKatex.js"></script>
-	<script src="./build/extensions/quizdownHighlight.js"></script>
-	<script>
-		quizdown.register(quizdownKatex).register(quizdownHighlight).init();
-	</script>
-	...
-</head>
+    </div>
 ```
 
-Write questions within a `quizdown` class (edit in the [🚀quizdown editor](https://bonartm.github.io/quizdown-live-editor/?code=---%0AprimaryColor%3A%20steelblue%0AshuffleQuestions%3A%20false%0AshuffleAnswers%3A%20true%0A---%0A%0A%23%23%23%20Select%20your%20superpowers!%0A%0A-%20%5B%20%5D%20Enhanced%20Strength%0A-%20%5B%20%5D%20Levitation%0A-%20%5Bx%5D%20Shapeshifting%0A%0A%23%23%23%20What%27s%20the%20capital%20of%20Germany%3F%0A%0A%3E%20Hint%3A%20The%20_largest_%20city%20in%20Germany...%0A%0A1.%20%5Bx%5D%20Berlin%0A1.%20%5B%20%5D%20Frankfurt%0A1.%20%5B%20%5D%20Paris%0A1.%20%5B%20%5D%20Cologne)):
+### ESM
+> See the example in `index.html`
+``` html
+<script type="module">
+  import Quizdown from '/src/quizdown.ts';
+  import quizdownKatex from '/src/extensions/quizdownKatex.ts';
+  const quizdown = new Quizdown();
+  // Register extension
+  quizdown.register(quizdownKatex);
+ quizdown.getShikiInstance()
+    .then(async (instance) => {
+      await quizdown.registerShikiLanguage("");
+      await quizdown.registerShikiTheme("");
+    })
+ window.addEventListener('load', () => {
+    const host = document.getElementById('quiz-container');
+    const rawQuizdown = host.innerHTML;
+    const config = { startOnLoad: false };
+   quizdown.createApp(rawQuizdown, host, config);
+ });
+</script>
 
-```html
-...
-<div class="quizdown">
-	---
-	primaryColor: steelblue
-	shuffleQuestions: false
-	shuffleAnswers: true
-	---
+```
+### IIFE
+> See the example in `index.dist.html.txt`
+``` html
+  <script type="module">
+    import Quizdown from '/src/quizdown.ts';
+    import quizdownKatex from '/src/extensions/quizdownKatex.ts';
 
-	### Select your superpowers!
+    const quizdown = new Quizdown();
 
-	- [ ] Enhanced Strength
-	- [ ] Levitation
-	- [x] Shapeshifting
+    quizdown.getShikiInstance()
+      .then(async (instance) => {
+        await quizdown.registerShikiLanguage("");
+        await quizdown.registerShikiTheme("");
+      })
 
-	### What's the capital of Germany?
+    window.addEventListener('load', () => {
+      const host = document.getElementById('quiz-container');
+      const rawQuizdown = host.innerHTML;
+      const config = { startOnLoad: false };
 
-	> Hint: The _largest_ city in Germany...
-
-	1. [x] Berlin
-	1. [ ] Frankfurt
-	1. [ ] Paris
-	1. [ ] Cologne
-</div>
-...
+      quizdown.createApp(rawQuizdown, host, config);
+    });
+  </script>
 ```
 
-## Register a new language
-You can register a new language that is supported by highlight.js with 
+## How to Write the Questions
+
+See [docs/syntax.md](docs/syntax.md)
+
+## API
+
+### Load themes and languages
+
+You can register as many languages as you want and one theme for the dark and one for the light mode. You can pass the url to a cdn or the object as a paramenter (an example is in the index.html).  
 ``` javascript
-// Parameters: name of the language, hljsDefineRobot-method
-quizdownHighlight.registerHljsLanguage("robot", hljsDefineRobot);
+quizdown.getShikiInstance()
+  .then(async (instance) => {
+    console.log(instance);
+
+    // Register languages (parameter: url to the language file. You can find them here: https://www.jsdelivr.com/package/npm/@shikijs/langs?tab=files&path=dist)
+    await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
+    await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/javascript.mjs");
+
+/*
+ Registering Themes
+   To register a theme, provide the following parameters:
+   1. **Theme Name**: Specify the name of the theme (e.g., 'catppuccin-latte', 'github-dark', if you get it from jsdelivr it is the filename).
+   2. **Theme Type**: Indicate whether the theme is 'light' or 'dark' mode.
+   3. **URL**: Provide the URL of the theme file. You can find available themes and their URLs on jsdelivr at:
+   https://www.jsdelivr.com/package/npm/@shikijs/themes?tab=files&path=dist
+*/
+    await quizdown.registerShikiTheme("catppuccin-latte", "light", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
+    await quizdown.registerShikiTheme("catppuccin-mocha", "dark", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-mocha.mjs");
+  })
 ```
 
-## Set the theme for hljs
-You can change the highlight.js with
-``` javascript
-// Parameters: the path/url the the theme
-quizdownHighlight.setTheme("https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.css");
-```
+### Hooks
 
-## Contributing
+Quizdown Extended provides several hooks that let you respond to quiz events.  
+You can register your functions to these hooks using the exposed API:
 
-Pull requests and feature requests are welcome. For major changes, please open an issue first to discuss what you would like to change. I'm happy for any feedback on how to improve the code base. 
+#### Available Hooks
 
-### Wish List
+- `quizdown.hooks.onQuizCreate(fn)`
+  - Called when the quiz is initialized and created.
+  - **Signature:** `() => void`
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizCreate(() => {
+      console.log("Quiz created");
+    });
+    ```
 
-- support for videos via youtube api (https://github.com/bonartm/quizdown-js/issues/10)
-- customizable reward page at the end of the quiz (https://github.com/bonartm/quizdown-js/issues/14)
-- fill in the blanks quiz (https://github.com/bonartm/quizdown-js/issues/17)
-- link quizzes on different pages together via a results summary page (https://github.com/bonartm/quizdown-js/issues/18)
+- `quizdown.hooks.onQuizQuestionChange(fn)`
+  - Called whenever the user switches to a different question.
+  - **Signature:** `(info: onQuestionChangeType) => void`
+  - `info` contains details about the current question, such as its index and state.
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizQuestionChange((info) => {
+      console.log("Current question changed:", info);
+    });
+    ```
 
-### How To
+- `quizdown.hooks.onQuizReset(fn)`
+  - Called when the quiz is reset.
+  - **Signature:** `() => void`
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizReset(() => {
+      alert("Quiz has been reset!");
+    });
+    ```
 
-After cloning, install the packages with 
+- `quizdown.hooks.onShowResults(fn)`
+  - Called when quiz results are shown (before the quiz is finished).
+  - **Signature:** `(stats: quizStats) => void`
+  - `stats` contains statistics about the quiz (number of questions, answers, etc).
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onShowResults((stats) => {
+      console.log("Results shown:", stats);
+    });
+    ```
 
-```bash
-npm install
-```
+- `quizdown.hooks.onQuizFinish(fn)`
+  - Called when the user finishes the quiz.
+  - **Signature:** `(stats: quizStats) => void`
+  - `stats` contains final statistics: number of questions, solved, right, wrong, etc.
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onQuizFinish((e) => {
+      document.getElementById('numberOfQuestions').innerText = "# of questions: " + e.numberOfQuestions;
+      document.getElementById('visited').innerText = "Visited: " + e.visited;
+      document.getElementById('solved').innerText = "Solved: " + e.solved;
+      document.getElementById('right').innerText = "Right: " + e.right;
+      document.getElementById('wrong').innerText = "Wrong: " + e.wrong;
+    });
+    ```
 
-Build the library with
+- `quizdown.hooks.onShowHint(fn)`
+  - Called when a hint is shown to the user.
+  - **Signature:** `() => void`
+  - **Example:**
+    ```javascript
+    quizdown.hooks.onShowHint(() => {
+      console.log("A hint was revealed!");
+    });
+    ```
 
-```bash
-npm run build
-```
+You can register multiple handlers for each hook.  
+For details on hook data types, see the source or type definitions.
 
-You can also preview a live version with
+### Options
+See here: [docs/options.md](docs/options.md)
 
-```bash
-npm run dev
-```
+---
 
-
-## Credits
-
-Inspired by the [mermaid library](https://mermaid-js.github.io/mermaid/#/) and the python package [quizdown](https://github.com/jjfiv/quizdown).
+# Todo
+- [ ] Improve doucmentation
+- [ ] Refactor some parts
+- [ ] Remove or reimplement the Katex-support
+- [ ] Make bundle size smaller
+- [ ] Put all languages except english in their own files that the user can load
+- [ ] Fix all warnings and typescript errors

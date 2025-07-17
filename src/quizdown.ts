@@ -1,103 +1,134 @@
+import { mount } from 'svelte';
 import App from './App.svelte';
-import parseQuizdown from './parser.js';
-import { Config } from './config.js';
-import marked from './customizedMarked.js';
+import parseQuizdown from './lib/parser.js';
+import { Config } from './lib/config.js';
+import marked from './lib/customizedMarked.js';
 import type { Quiz } from './quiz';
+import { createShadowRoot } from './lib/shadowRootManager';
+import type { HighlighterCore } from 'shiki';
+import { getHighlighterInstance, registerLanguage, registerTheme } from './lib/codeBlockHighlighter';
+import { QuizdownHooks } from './quizdownHooks';
 
-export interface Quizdown {
-    register(extension: QuizdownExtension): Quizdown;
-    createApp(rawQuizdown: string, node: Element, config: Config): App;
+export interface IQuizdown {
+    register(extension: IQuizdownExtension): IQuizdown;
+    createApp(rawQuizdown: string, node: Element, config: Config): App | void;
     parseQuizdown(rawQuizdown: string, config: Config): Quiz;
     init(config: object): void;
     getMarkedParser(): typeof marked;
-    listenForStats(quizdownNode: HTMLElement, eventHandler: Function): void;
+    getShikiInstance(): Promise<HighlighterCore>;
+    registerShikiLanguage(url: string): void;
+    registerShikiTheme(name: string, type: "light" | "dark", url: string): void;
 }
 
-export interface QuizdownExtension {
-    setup(quizdown: Quizdown): void;
+export interface IQuizdownExtension {
+    setup(quizdown: IQuizdown): void;
 }
 
-function register(extension: QuizdownExtension): Quizdown {
-    extension.setup(this as Quizdown);
-    return this as Quizdown;
-}
+class Quizdown implements IQuizdown {
+    private globalConfig: Config | null = null;
+    public hooks: QuizdownHooks = new QuizdownHooks();
+    private hookTrigger = this.hooks.getInternalAPI();
 
-function createApp(rawQuizdown: string, node: Element, config: Config): App {
-    node.innerHTML = '';
-    let root: ShadowRoot;
-    if (!!node.shadowRoot) {
-        //clear root if it allready exists
-        root = node.shadowRoot;
-        root.innerHTML = '';
-    } else {
-        root = node.attachShadow({ mode: 'open' });
+
+    register(extension: IQuizdownExtension): IQuizdown {
+        extension.setup(this as IQuizdown);
+        return this;
     }
-    try {
-        let quiz = parseQuizdown(rawQuizdown, config);
-        let app = new App({
-            // https://github.com/sveltejs/svelte/pull/5870
-            target: root,
-            intro: false,
-            props: {
-                quiz: quiz,
-            },
-        });
-        // Listen for quiz-stats event and re-emit to parent
-        root.addEventListener('quiz-stats', (e: Event) => {
-            const customEvent = e as CustomEvent;
-            // Forward to parent window
-            const statsEvent = new CustomEvent('quizdown-stats', { detail: customEvent.detail });
-            node.dispatchEvent(statsEvent);
-        });
-        return app;
-    } catch (e) {
-        root.innerHTML = `${e}. App could not render. Please check your quizdown syntax.`;
-    }
-}
 
-function init(config: object = {}): void {
-    let globalConfig = new Config(config);
-    if (globalConfig.startOnLoad) {
-        if (typeof document !== 'undefined') {
+    createApp(rawQuizdown: string, node: Element, config: Config): App | void {
+        const root = createShadowRoot(node);
+
+        try {
+            const quiz = this.parseQuizdown(rawQuizdown, config);
+
+            const app = mount(App, {
+                target: root,
+                intro: false,
+                props: {
+                    quiz,
+                },
+            });
+
+            node.addEventListener('quizdown-event', (e: Event) => {
+                switch (e.detail.eventType) {
+                    case "onQuizQuestionChange":
+                        this.hookTrigger.triggerQuizQuestionChange(e.detail.details);
+                        break;
+                    case "onQuizReset":
+                        this.hookTrigger.triggerQuizReset();
+                        break;
+                    case "onShowResults":
+                        this.hookTrigger.triggerShowResults(e.detail.details);
+                        break;
+                    case "onQuizFinish":
+                        this.hookTrigger.triggerQuizFinish(e.detail.details);
+                        break;
+                    case "onShowHint":
+                        this.hookTrigger.triggerShowHint();
+                        break;
+                    default:
+                        console.error("Unkown event");
+                        break;
+                }
+            });
+
+            this.hookTrigger.triggerCreate();
+
+            return app;
+        } catch (e) {
+            node.innerHTML = `${e}. App could not render. Please check your quizdown syntax.`;
+        }
+    }
+
+    parseQuizdown(rawQuizdown: string, config: Config): Quiz {
+        return parseQuizdown(rawQuizdown, config);
+    }
+
+    init(config: object = {}): void {
+        this.globalConfig = new Config(config);
+
+        if (this.globalConfig.startOnLoad && typeof document !== 'undefined') {
             window.addEventListener(
                 'load',
-                function () {
-                    let nodes = document.querySelectorAll('.quizdown');
-                    for (let node of nodes) {
-                        createApp(node.innerHTML, node, globalConfig);
+                () => {
+                    const nodes = document.querySelectorAll('.quizdown');
+                    for (const node of nodes) {
+                        this.createApp(node.innerHTML, node, this.globalConfig!);
                     }
                 },
                 false
             );
         }
     }
+
+    getShikiInstance(): Promise<HighlighterCore> {
+        return getHighlighterInstance();
+    }
+
+    // Overloads
+    async registerShikiLanguage(url: string): Promise<void>;
+    async registerShikiLanguage(languageObject: any): Promise<void>;
+
+    // Implementation
+    async registerShikiLanguage(arg: string | any): Promise<void> {
+        await registerLanguage(arg);
+    }
+
+    async registerShikiTheme(name: string, type: "light" | "dark", url: string): Promise<void>;
+    async registerShikiTheme(name: string, type: "light" | "dark", themeObject: any): Promise<void>;
+
+
+    async registerShikiTheme(
+        name: string,
+        type: "light" | "dark",
+        third: string | any
+    ): Promise<void> {
+        await registerTheme(name, type, third);
+    }
+
+    getMarkedParser(): typeof marked {
+        return marked;
+    }
 }
 
-/**
- * Attaches an event listener to the given quizdownNode that listens for the 'quizdown-stats' event.
- *
- * When the 'quizdown-stats' event is emitted, the provided eventHandler is called with the event's detail.
- *
- * @param quizdownNode - The HTML element that will emit the quizdown statistics event.
- * @param eventHandler - The callback function that handles the statistics data from the event detail.
- */
-function listenForStats(quizdownNode: HTMLElement, eventHandler: Function): void {
-    quizdownNode.addEventListener('quizdown-stats', (event) => {
-        eventHandler((event as any).detail);
-    });
-}
-
-function getMarkedParser(): typeof marked {
-    return marked;
-}
-
-let quizdown: Quizdown = {
-    init,
-    register,
-    parseQuizdown,
-    createApp,
-    getMarkedParser,
-    listenForStats,
-};
-
-export default quizdown;
+export default Quizdown;

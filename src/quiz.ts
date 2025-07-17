@@ -1,29 +1,12 @@
-import { writable, get, Writable } from 'svelte/store';
+import { writable, get, type Writable } from 'svelte/store';
 import autoBind from 'auto-bind';
-import type { Config } from './config.js';
+import type { Config } from './lib/config.js';
 import quizdown from './quizdown.js';
+import { isEqualArray } from './lib/utils/arrayComparison'
+import { shuffle } from './lib/utils/shuffle';
 
 function isEqual(a1: Array<number>, a2: Array<number>): boolean {
-    return JSON.stringify(a1) === JSON.stringify(a2);
-}
-
-function shuffle(array: Array<any>, n: number | undefined): Array<any> {
-    // https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-    let currentIndex = array.length,
-        temporaryValue,
-        randomIndex;
-
-    // While there remain elements to shuffle...
-    while (0 !== currentIndex) {
-        // Pick a remaining element...
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        // And swap it with the current element.
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
-    }
-    return array.slice(0, n);
+    return isEqualArray(a1, a2);
 }
 
 // we need to reference the classes in the svelte app despite minifaction of class names
@@ -32,9 +15,11 @@ export type QuestionType = 'MultipleChoice' | 'SingleChoice' | 'Sequence';
 export abstract class BaseQuestion {
     readonly text: string;
     answers: Array<Answer>;
+    readonly originalAnswers: Array<Answer>; // To preserve initial order
     readonly explanation: string;
     selected: Array<number>;
     solved: boolean;
+    correct: boolean;
     readonly hint: string;
     readonly questionType: QuestionType;
     readonly options: Config;
@@ -50,15 +35,17 @@ export abstract class BaseQuestion {
         options: Config
     ) {
         if (answers.length === 0) {
-            throw 'no answers for question provided';
+            throw new Error('no answers for question provided');
         }
         this.text = text;
         this.explanation = explanation;
         this.hint = hint;
         this.solved = false;
+        this.correct = false;
         this.showHint = writable(false);
         this.options = options;
-        this.answers = answers;
+        this.answers = [...answers]; // Create a mutable copy
+        this.originalAnswers = [...answers]; // Create a copy to preserve original order
         this.questionType = questionType;
         this.visited = false;
         autoBind(this);
@@ -75,22 +62,39 @@ export abstract class BaseQuestion {
         this.visited = false;
         this.showHint.set(false);
         if (this.options.shuffleAnswers) {
-            this.answers = shuffle(this.answers, this.answers.length);
+            this.answers = shuffle([...this.originalAnswers], this.originalAnswers.length);
+        } else {
+            this.answers = [...this.originalAnswers];
         }
     }
+
+    getTextWithoutHTML() {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = this.text;
+        return tempDiv.textContent || tempDiv.innerText || '';
+    }
+
     abstract isCorrect(): boolean;
 }
 
 class Blanks extends BaseQuestion {
     isCorrect() {
-        this.solved = false;
+        let trueAnswerIds = this.answers
+            .filter((answer) => answer.correct)
+            .map((answer) => answer.id);
+        let selectedAnswerIds = this.selected.map((i) => this.answers[i].id);
+        this.solved = isEqual(trueAnswerIds.sort(), selectedAnswerIds.sort());
         return this.solved;
     }
 }
 
 class Pairs extends BaseQuestion {
     isCorrect() {
-        this.solved = false;
+        let trueAnswerIds = this.answers
+            .filter((answer) => answer.correct)
+            .map((answer) => answer.id);
+        let selectedAnswerIds = this.selected.map((i) => this.answers[i].id);
+        this.solved = isEqual(trueAnswerIds.sort(), selectedAnswerIds.sort());
         return this.solved;
     }
 }
@@ -109,10 +113,13 @@ export class Sequence extends BaseQuestion {
     }
 
     isCorrect() {
-        // extract answer ids from answers
-        let trueAnswerIds = this.answers.map((answer) => answer.id);
-        this.solved = isEqual(trueAnswerIds.sort(), this.selected);
-        return this.solved;
+        if (this.answers.length !== this.originalAnswers.length) return false;
+
+        const ids1 = this.answers.map(obj => obj.id);
+        const ids2 = this.originalAnswers.map(obj => obj.id);
+
+        return ids1.every((id, index) => id === ids2[index]);
+
     }
 }
 
@@ -150,8 +157,39 @@ export class SingleChoice extends Choice {
         super(text, explanation, hint, answers, 'SingleChoice', options);
         let nCorrect = this.answers.filter((answer) => answer.correct).length;
         if (nCorrect > 1) {
-            throw 'Single Choice questions can not have more than one correct answer.';
+            throw new Error('Single Choice questions can not have more than one correct answer.');
         }
+    }
+
+    isCorrect(): boolean {
+
+        // 1. Find the ID of the answer that is marked as correct.
+        const correctAnswer = this.answers.find(answer => answer.correct);
+
+        if (!correctAnswer) {
+            this.solved = false;
+            return false;
+        }
+        const correctAnswerId = correctAnswer.id;
+
+        // 2. Find the ID of the answer the user selected.
+        if (this.selected.length === 0) {
+            this.solved = false;
+            return false;
+        }
+
+        const selectedIndex = this.selected[0];
+        const selectedAnswer = this.answers[selectedIndex];
+
+        if (!selectedAnswer) {
+            this.solved = false;
+            return false;
+        }
+        const selectedAnswerId = selectedAnswer.id;
+
+        // 3. Compare the two stable IDs.
+        this.solved = (correctAnswerId === selectedAnswerId);
+        return this.solved;
     }
 }
 
@@ -189,7 +227,7 @@ export class Quiz {
             this.questions = shuffle(this.questions, this.config.nQuestions);
         }
         if (this.questions.length == 0) {
-            throw 'No questions for quiz provided';
+            throw new Error('No questions for quiz provided');
         }
         // setup first question
         this.active = writable(this.questions[0]);
@@ -226,12 +264,14 @@ export class Quiz {
             this.onResults.set(false);
             this.onLast.set(index == this.questions.length - 1);
             this.onFirst.set(index == 0);
+
             return true;
         } else if (index == this.questions.length) {
             // on results page
             this.onResults.set(true);
             this.onLast.set(false);
             this.index.set(index);
+
             return true;
         } else {
             return false;
@@ -246,13 +286,16 @@ export class Quiz {
         return this.jump(get(this.index) - 1);
     }
 
-    reset(): Boolean {
+    reset(): boolean {
         this.onLast.set(false);
         this.onResults.set(false);
         this.allVisited.set(false);
         this.isEvaluated.set(false);
 
         this.questions.forEach((q) => q.reset());
+        if (this.config.shuffleQuestions) {
+            this.questions = shuffle(this.questions, this.config.nQuestions);
+        }
         return this.jump(0);
     }
 
@@ -261,6 +304,7 @@ export class Quiz {
         for (var q of this.questions) {
             if (q.isCorrect()) {
                 points += 1;
+                q.correct = q.isCorrect();
             }
         }
         this.isEvaluated.set(true);

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="./quizdown.iife.js"></script>
+  <title>Quizdown Demo Page</title>
+
+  <style>
+    html {
+      font-family: sans-serif;
+    }
+
+    body {
+      font-size: 1.1em;
+      line-height: 1.5;
+    }
+
+    .container {
+      margin: auto;
+      max-width: 600px;
+    }
+  </style>
+
+  <script>
+
+    //Quizdown.init();
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Quizdown Demo Page</h1>
+    <div class="quizdown">
+      ---
+      shuffleAnswers: true
+      shuffleQuestions: true
+      nQuestions: 5
+      passingGrade: 80
+      customPassMsg: You have Passed!
+      customFailMsg: You have not passed
+      ---
+
+      #### What's the value of $x$?
+
+      This is what I mean:
+      $$
+      x=\sqrt{\frac{9}{16}}
+      $$
+
+      > Also check out $\sqrt{x+2}$!
+
+      - [x] Try out: $x=0.75$
+      - [ ] $x=0.5$ could also *be correct*!
+      - [ ] perhaps $x=1$?
+      - [ ] $x=1.5$
+
+      #### What's the value of `x[3]`?
+
+      ```python
+      # a python list
+      x = [1, 2, 3, 4]
+      ```
+
+      - [ ] 1
+      - [ ] 2
+      - [ ] 3
+      - [x] 4
+
+      #### <i>Is that italic</i>
+
+      ```python
+      x = [1, 2, 3, 4]
+      ```
+
+      - [x] Yes
+      - [x] Yup, it is
+      - [ ] No
+
+      #### Order the following letters
+
+      1. a
+      2. b
+      3. c
+      4. d
+
+      ## Please bring the following into sequence!
+
+      That's **super easy**!
+
+      > Three is larger than one...
+
+      1. One
+      2. Two
+      3. Three
+      4. Four
+      5. Five
+    </div>
+
+    <div id="stats">
+      <p id="numberOfQuestions"></p>
+      <p id="visited"></p>
+      <p id="solved"></p>
+      <p id="right"></p>
+      <p id="wrong"></p>
+    </div>
+  </div>
+
+  <script>
+
+    const quizdown = new Quizdown();
+
+    quizdown.init();
+
+    quizdown.getShikiInstance()
+      .then(async (instance) => {
+        await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
+        //await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/javascript.mjs"); // You can register multiple languages
+        await quizdown.registerShikiTheme("catppuccin-latte", "light", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
+        await quizdown.registerShikiTheme("catppuccin-mocha", "dark", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-mocha.mjs");
+      })
+
+
+    quizdown.hooks.onQuizFinish((e) => {
+      document.getElementById('numberOfQuestions').innerText = "# of questions: " + e.numberOfQuestions;
+      document.getElementById('visited').innerText = "Visited: " + e.visited;
+      document.getElementById('solved').innerText = "Solved: " + e.solved;
+      document.getElementById('right').innerText = "Right: " + e.right;
+      document.getElementById('wrong').innerText = "Wrong: " + e.wrong;
+    })
+
+  </script>
+</body>
+
+</html>

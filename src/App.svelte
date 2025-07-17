@@ -1,159 +1,267 @@
 <script lang="ts">
+    import { createEventDispatcher, tick } from 'svelte'; // Make sure this is properly imported
+    import { get } from 'svelte/store';
     import type { Quiz } from './quiz';
-    import ProgressBar from './components/ProgressBar.svelte';
-    import { onMount } from 'svelte';
+    import ProgressBar from './lib/components/ProgressBar.svelte';
     import registerLanguages from './languages/i18n';
-    import Card from './components/Card.svelte';
-    import Credits from './components/Credits.svelte';
-    import SmoothResize from './components/SmoothResize.svelte';
-    import QuestionView from './components/QuestionView.svelte';
-    import Row from './components/Row.svelte';
-    import Button from './components/Button.svelte';
+    import { highlightAllCodeBlocks, registerTheme, registerLanguage } from './lib/codeBlockHighlighter';
+    import Card from './lib/components/Card.svelte';
+    import Credits from './lib/components/Credits.svelte';
+    import SmoothResize from './lib/components/SmoothResize.svelte';
+    import QuestionView from './lib/components/QuestionView.svelte';
+    import Row from './lib/components/Row.svelte';
+    import Button from './lib/components/Button.svelte';
     import { _ } from 'svelte-i18n';
-    import ResultsView from './components/ResultsView.svelte';
-    // import { Linear, CheckFirst } from './progressModes.js';
-    import Animated from './components/Animated.svelte';
-    import registerIcons from './registerIcons.js';
-    import Icon from './components/Icon.svelte';
-    import Hint from './components/Hint.svelte';
+    import ResultsView from './lib/components/ResultsView.svelte';
+    import Animated from './lib/components/Animated.svelte';
+    import Hint from './lib/components/Hint.svelte';
     import { fly } from 'svelte/transition';
-    import Container from './components/Container.svelte';
-    import Loading from './components/Loading.svelte';
-    // import Modal from './components/Modal.svelte';
-    import { createEventDispatcher } from 'svelte';
+    import Container from './lib/components/Container.svelte';
+    import Loading from './lib/components/Loading.svelte';
 
-    export let quiz: Quiz;
+    interface Props {
+        quiz: Quiz;
+    }
+
+    let { quiz }: Props = $props();
     const dispatch = createEventDispatcher();
-    // https://github.com/sveltejs/svelte/issues/4079
-    $: question = quiz.active;
-    $: showHint = $question.showHint;
-    $: index = quiz.index;
-    $: onLast = quiz.onLast;
-    $: onFirst = quiz.onFirst;
-    $: onResults = quiz.onResults;
-    $: isEvaluated = quiz.isEvaluated;
-    $: allVisited = quiz.allVisited;
-
-    //let game = new Linear(quiz);
 
     let enableRetry = quiz.config.enableRetry;
 
     registerLanguages(quiz.config.locale);
-    registerIcons();
 
-    let node: HTMLElement;
+    let node: HTMLElement = $state();
     let minHeight = 150;
-    let reloaded = false;
-    // let showModal = false;
+    let reloaded = $state(false);
 
-    // set global options
-    onMount(async () => {
-        let buttonColor: string = quiz.config.buttonColor;
-        let primaryColor: string = quiz.config.primaryColor;
-        let secondaryColor: string = quiz.config.secondaryColor;
-        let textColor: string = quiz.config.textColor;
+    // These are for tracking UI state changes
+    let currentIndex = $state(0);
+    let showingResults = $state(false);
+    let isFirst = $state(true);
+    let isLast = $state(quiz.questions.length === 1);
+    let allQuestionsVisited = $state(quiz.questions.length === 1);
+    let currentHintShown = $state(false);
+    let evaluationDone = $state(false);
 
-        node.style.setProperty('--quizdown-color-button', buttonColor);
-        node.style.setProperty('--quizdown-color-primary', primaryColor);
-        node.style.setProperty('--quizdown-color-secondary', secondaryColor);
-        node.style.setProperty('--quizdown-color-text', textColor);
-        node.style.minHeight = `${minHeight}px`;
-        dispatchStats();
-    });
+    // Initialize with the first question
+    let currentQuestion = $state(quiz.questions[0]);
 
-    $: if ($onResults && $isEvaluated) {
-        dispatchStats();
-    }
+    // Function to update the UI state based on quiz state
+    function updateUIState() {
+        const idxValue = get(quiz.index);
+        currentIndex = idxValue;
+        showingResults = get(quiz.onResults);
+        isFirst = get(quiz.onFirst);
+        isLast = get(quiz.onLast);
+        allQuestionsVisited = get(quiz.allVisited);
+        evaluationDone = get(quiz.isEvaluated);
 
-    const dispatchStats = () => {
-        const event = new CustomEvent('quizdown-stats', {
-            detail: quiz.getStats(),
-            bubbles: true,
-            composed: true, // allows it to bubble across the shadow DOM boundary
+        tick()
+        .then(async () => {
+            await highlightAllCodeBlocks();
         });
 
-        if (node) {
-            node.dispatchEvent(event);
+        if (!showingResults && idxValue < quiz.questions.length) {
+            currentQuestion = quiz.questions[idxValue];
+            if (currentQuestion) {
+                currentHintShown = get(currentQuestion.showHint);
+            }
+        }
+    }
+
+    // Navigation functions with improved error handling
+    function goToNext() {
+        try {
+            if (quiz.next()) {
+                updateUIState();
+                dispatchHook("onQuizQuestionChange", {direction: "forward" });
+            }
+        } catch (err) {
+            console.error('Navigation error:', err);
+        }
+    }
+
+    function goToPrevious() {
+        try {
+            if (quiz.previous()) {
+                updateUIState();
+                dispatchHook("onQuizQuestionChange", {direction: "backward" });
+            }
+        } catch (err) {
+            console.error('Navigation error:', err);
+        }
+    }
+
+    function showResults() {
+        try {
+            if (quiz.jump(quiz.questions.length)) {
+                // Force evaluation
+                evaluationDone = true;
+
+                dispatchHook("onShowResults", quiz.getStats());
+                updateUIState();
+            }
+        } catch (err) {
+            console.error('Show results error:', err);
+        }
+    }
+
+    function resetQuiz() {
+        try {
+            reloaded = !reloaded;
+            if (quiz.reset()) {
+                evaluationDone = false;
+
+                dispatchHook("onQuizReset");
+                updateUIState();
+            }
+        } catch (err) {
+            console.error('Reset error:', err);
+        }
+    }
+
+    function showHint() {
+        if (currentQuestion) {
+            currentQuestion.enableHint();
+            currentHintShown = true;
+            dispatchHook("onShowHint");
+        }
+    }
+
+    // Modified dispatch stats to handle validation results
+    const dispatchHook = (eventType: string, details: object | undefined = undefined) => {
+        const eventDetails = {
+            eventType: eventType,
+            details: details
+        }
+
+        try {
+            const event = new CustomEvent('quizdown-event', {
+                detail: eventDetails,
+                bubbles: true,
+                composed: true,
+            });
+
+            if (node) {
+                node.dispatchEvent(event);
+            }
+        } catch (err) {
+            console.error('Event dispatch error:', err);
         }
     };
+
+    // Initialize UI state
+    $effect(() => {
+        updateUIState();
+    });
+
+    // Effect to handle DOM setup
+    $effect(() => {
+        if (node) {
+            let buttonColor: string = quiz.config.buttonColor;
+            let primaryColor: string = quiz.config.primaryColor;
+            let secondaryColor: string = quiz.config.secondaryColor;
+            let textColor: string = quiz.config.textColor;
+
+            node.style.setProperty('--quizdown-color-button', buttonColor);
+            node.style.setProperty('--quizdown-color-primary', primaryColor);
+            node.style.setProperty(
+                '--quizdown-color-secondary',
+                secondaryColor
+            );
+            node.style.setProperty('--quizdown-color-text', textColor);
+            node.style.minHeight = `${minHeight}px`;
+            //dispatchStats();
+
+            
+        }
+    });
+
+    // Effect for results tracking
+    $effect(() => {
+        if (showingResults && evaluationDone) {
+            dispatchHook("onQuizFinish", quiz.getStats());
+        }
+    });
 </script>
 
-<div class="quizdown-content" bind:this="{node}">
+<div class="quizdown-content" bind:this={node}>
     <Card>
-        <ProgressBar value="{$index}" max="{quiz.questions.length - 1}" />
-        <Loading update="{reloaded}" ms="{800}" {minHeight}>
+        <ProgressBar value={currentIndex} max={quiz.questions.length - 1} />
+        <Loading update={reloaded} ms={800} {minHeight}>
             <Container>
                 <SmoothResize {minHeight}>
-                    <Animated update="{$index}">
-                        {#if $onResults}
+                    <Animated update={currentIndex}>
+                        {#if showingResults}
                             <ResultsView {quiz} />
-                        {:else}
+                        {:else if currentQuestion}
                             <QuestionView
-                                question="{$question}"
-                                n="{$index + 1}"
+                                question={currentQuestion}
+                                n={currentIndex + 1}
                             />
-                            <Hint hint="{$question.hint}" show="{$showHint}" />
+                            <Hint
+                                hint={currentQuestion.hint}
+                                show={currentHintShown}
+                            />
                         {/if}
                     </Animated>
                 </SmoothResize>
 
-                <!-- <Modal show="{showModal}">Are you sure?</Modal> -->
-
                 <Row>
-                    <Button
-                        btnClass="quizControlButton hintButton"
-                        slot="left"
-                        title="{$_('hint')}"
-                        disabled="{!$question.hint || $showHint || $onResults}"
-                        buttonAction="{$question.enableHint}"
-                        ><Icon name="lightbulb" solid="{false}" /></Button
-                    >
-                    <svelte:fragment slot="center">
+                    {#snippet left()}
+                        <Button
+                            btnClass="quizControlButton hintButton"
+                            title={$_('hint')}
+                            disabled={!currentQuestion?.hint ||
+                                currentHintShown ||
+                                showingResults}
+                            buttonAction={showHint}>💡</Button
+                        >
+                    {/snippet}
+                    {#snippet center()}
                         <Button
                             btnClass="quizControlButton previousButton"
-                            title="{$_('previous')}"
-                            disabled="{$onFirst || $onResults || $isEvaluated}"
-                            buttonAction="{quiz.previous}"
-                            ><Icon name="arrow-left" size="lg" /></Button
+                            title={$_('previous')}
+                            disabled={isFirst ||
+                                showingResults ||
+                                evaluationDone}
+                            buttonAction={goToPrevious}>⬅</Button
                         >
 
                         <Button
                             btnClass="quizControlButton nextButton"
-                            disabled="{$onLast || $onResults || $isEvaluated}"
-                            buttonAction="{quiz.next}"
-                            title="{$_('next')}"
-                            ><Icon name="arrow-right" size="lg" /></Button
+                            disabled={isLast ||
+                                showingResults ||
+                                evaluationDone}
+                            buttonAction={goToNext}
+                            title={$_('next')}>⮕</Button
                         >
 
-                        {#if $onLast || $allVisited}
-                            <div in:fly="{{ x: 200, duration: 500 }}">
+                        {#if isLast || allQuestionsVisited}
+                            <div in:fly={{ x: 200, duration: 500 }}>
                                 <Button
                                     btnClass="quizControlButton checkResultsButton"
-                                    disabled="{!($onLast || $allVisited) ||
-                                        $onResults}"
-                                    title="{$_('evaluate')}"
-                                    buttonAction="{() =>
-                                        quiz.jump(quiz.questions.length)}"
+                                    disabled={!(
+                                        isLast || allQuestionsVisited
+                                    ) || showingResults}
+                                    title={$_('evaluate')}
+                                    buttonAction={showResults}
                                 >
-                                    <Icon name="check-double" size="lg" />
+                                    ✅
                                 </Button>
                             </div>
                         {/if}
-                    </svelte:fragment>
-                    <svelte:fragment slot="right">
+                    {/snippet}
+                    {#snippet right()}
                         {#if enableRetry}
                             <Button
-                                slot="right"
-                                title="{$_('reset')}"
-                                buttonAction="{() => {
-                                    reloaded = !reloaded;
-                                    quiz.reset();
-                                }}"
+                                title={$_('reset')}
+                                buttonAction={resetQuiz}
                                 btnClass="quizControlButton retryButton"
-                                ><Icon name="redo" /></Button
+                                >↻</Button
                             >
                         {/if}
-                    </svelte:fragment>
+                    {/snippet}
                 </Row>
 
                 <Credits />
@@ -162,12 +270,7 @@
     </Card>
 </div>
 
-<!-- global styles applied to all elements in the app -->
-<style type="text/scss" global>
-    @import 'highlight.js/styles/github';
-    @import 'katex/dist/katex';
-    @import '@fortawesome/fontawesome-svg-core/styles';
-
+<style global lang="scss">
     img {
         max-height: 400px;
         border-radius: 4px;
