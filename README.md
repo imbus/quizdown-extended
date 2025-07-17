@@ -196,3 +196,5 @@ See here: [docs/options.md](docs/options.md)
 - [ ] Make bundle size smaller
 - [ ] Put all languages except english in their own files that the user can load
 - [ ] Fix all warnings and typescript errors
+- [ ] Write tests
+- [ ] Improve accessibilty
