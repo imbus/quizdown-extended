@@ -100,15 +100,28 @@
   <script type="module">
     import Quizdown from '/src/quizdown.ts';
     import quizdownKatex from '/src/extensions/quizdownKatex.ts';
+    import catppuccinLatte from '/node_modules/@shikijs/themes/dist/catppuccin-latte.mjs'
+    import catppuccinMocha from '/node_modules/@shikijs/themes/dist/catppuccin-mocha.mjs'
+
+    import javascript from  '/node_modules/@shikijs/langs/dist/javascript.mjs'
+    import python from  '/node_modules/@shikijs/langs/dist/python.mjs'
 
     const quizdown = new Quizdown();
 
     quizdown.getShikiInstance()
       .then(async (instance) => {
-        await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/python.mjs");
-        await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/javascript.mjs");
-        await quizdown.registerShikiTheme("catppuccin-latte", "light", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-latte.mjs");
-        await quizdown.registerShikiTheme("catppuccin-mocha", "dark", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-mocha.mjs");
+        await quizdown.registerShikiLanguage(javascript);
+        await quizdown.registerShikiLanguage(python);
+
+        // Import from cdn
+        // await quizdown.registerShikiLanguage("https://cdn.jsdelivr.net/npm/@shikijs/langs@3.8.0/dist/javascript.mjs");
+
+        // Import from module
+        await quizdown.registerShikiTheme("catppuccin-latte", "light", catppuccinLatte);
+        await quizdown.registerShikiTheme("catppuccin-mocha", "dark", catppuccinMocha);
+
+        // Import from cdn
+        // await quizdown.registerShikiTheme("catppuccin-mocha", "dark", "https://cdn.jsdelivr.net/npm/@shikijs/themes@3.8.0/dist/catppuccin-mocha.mjs");
       })
 
 

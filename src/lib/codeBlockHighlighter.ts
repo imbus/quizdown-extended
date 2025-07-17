@@ -49,56 +49,98 @@ export async function getHighlighterInstance(): Promise<HighlighterCore> {
 /**
  * Load theme if not already loaded
  */
-export async function registerTheme(name: string, type: "light" | "dark", url: string): Promise<void> {
+export async function registerTheme(name: string, type: 'light' | 'dark', url: string): Promise<void>;
+export async function registerTheme(name: string, type: 'light' | 'dark', themeObject: any): Promise<void>;
+
+// Implementation
+export async function registerTheme(
+  name: string,
+  type: 'light' | 'dark',
+  third: string | any
+): Promise<void> {
   if (loadedThemes.has(type)) {
     return;
   }
 
   try {
-    const res = await fetch(url);
-    const jsText = await res.text();
-    const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
-    const themeModule = await import(/* @vite-ignore */ blobUrl);
+    let theme: any;
+    let url: string = 'inlined';
 
-    const theme = themeModule.default || themeModule;
+    if (typeof third === 'string') {
+      // Remote URL
+      url = third;
+      const res = await fetch(url);
+      const jsText = await res.text();
+      const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
+      const themeModule = await import(/* @vite-ignore */ blobUrl);
+      theme = themeModule.default || themeModule;
+    } else {
+      // Direct theme object
+      theme = third;
+    }
+
     const highlighter = await getHighlighterInstance();
     await highlighter.loadTheme(theme);
 
     if (typeof theme.css === 'string') {
-      const name = theme.name || url;
-      themeCssMap.set(name, theme.css);
+      const themeName = theme.name || name;
+      themeCssMap.set(themeName, theme.css);
     }
 
-    const entry: ThemeEntry = {url: url, name: name}
-    loadedThemes.set(type, entry);
+    loadedThemes.set(type, {
+      url,
+      name: theme.name || name
+    });
   } catch (error) {
-    console.error(`Error loading theme from ${url}:`, error);
+    console.error(`Error loading theme:`, error);
   }
-
 }
 
 /**
  * Load language if not already loaded
  */
-export async function registerLanguage(url: string): Promise<void> {
-  if (loadedLanguages.has(url)) {
-    return;
-  }
+// Overload signatures
+export async function registerLanguage(url: string): Promise<void>;
+export async function registerLanguage(languageObject: any): Promise<void>;
 
+// Implementation
+export async function registerLanguage(
+  arg: string | any
+): Promise<void> {
   try {
-    const res = await fetch(url);
-    const jsText = await res.text();
-    const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
-    const langModule = await import(/* @vite-ignore */ blobUrl);
+    let language: any;
+    let key: string;
+
+    if (typeof arg === 'string') {
+      // Remote language by URL
+      if (loadedLanguages.has(arg)) {
+        return;
+      }
+
+      const res = await fetch(arg);
+      const jsText = await res.text();
+      const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
+      const langModule = await import(/* @vite-ignore */ blobUrl);
+      language = langModule.default || langModule;
+      key = arg;
+    } else {
+      // Direct language object
+      language = arg;
+      key = language.name || JSON.stringify(language); // fallback if no name
+      if (loadedLanguages.has(key)) {
+        return;
+      }
+    }
 
     const highlighter = await getHighlighterInstance();
-    await highlighter.loadLanguage(langModule.default || langModule);
+    await highlighter.loadLanguage(language);
 
-    loadedLanguages.add(url);
+    loadedLanguages.add(key);
   } catch (error) {
-    console.error(`Error loading language from ${url}:`, error);
+    console.error(`Error loading language:`, error);
   }
 }
+
 
 /**
  * Highlight all code blocks
@@ -135,7 +177,7 @@ export async function highlightAllCodeBlocks(
           light: themes.get("light").name,
           dark: themes.get("dark").name
         },
-        defaultColor: 'light-dark()', 
+        defaultColor: 'light-dark()',
       });
       const container = document.createElement('div');
       container.innerHTML = html;

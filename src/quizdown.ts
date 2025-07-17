@@ -105,12 +105,25 @@ class Quizdown implements IQuizdown {
         return getHighlighterInstance();
     }
 
-    async registerShikiLanguage(url: string): Promise<void> {
-        await registerLanguage(url);
+    // Overloads
+    async registerShikiLanguage(url: string): Promise<void>;
+    async registerShikiLanguage(languageObject: any): Promise<void>;
+
+    // Implementation
+    async registerShikiLanguage(arg: string | any): Promise<void> {
+        await registerLanguage(arg);
     }
 
-    async registerShikiTheme(name: string, type: "light" | "dark", url: string): Promise<void> {
-        await registerTheme(name, type, url);
+    async registerShikiTheme(name: string, type: "light" | "dark", url: string): Promise<void>;
+    async registerShikiTheme(name: string, type: "light" | "dark", themeObject: any): Promise<void>;
+
+
+    async registerShikiTheme(
+        name: string,
+        type: "light" | "dark",
+        third: string | any
+    ): Promise<void> {
+        await registerTheme(name, type, third);
     }
 
     getMarkedParser(): typeof marked {

@@ -84,7 +84,7 @@ See [docs/syntax.md](docs/syntax.md)
 
 ### Load themes and languages
 
-You can register as many languages as you want and one theme for the dark and one for the light mode.  
+You can register as many languages as you want and one theme for the dark and one for the light mode. You can pass the url to a cdn or the object as a paramenter (an example is in the index.html).  
 ``` javascript
 quizdown.getShikiInstance()
   .then(async (instance) => {
