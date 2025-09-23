@@ -1,8 +1,7 @@
 <script lang="ts">
 	// In Svelte 5, declare the bindable prop with $props.
 	let dataInternal = $state();
-	let { data = $bindable(), ...props } = $props()
-	
+	let { data = $bindable() } = $props()
 
 	// Cannot use 'bind:' with this property. It is declared as non-bindable inside the component.
     // To mark a property as bindable: 'let { data = $bindable() } = $props()'ts(2322)
@@ -47,7 +46,7 @@
 	function handleDragEnd() {
 		resetDragState();
 	}
-	
+
 	function resetDragState() {
 		draggingIndex = -1;
 		dragOverIndex = -1;

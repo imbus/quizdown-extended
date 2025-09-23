@@ -3,7 +3,7 @@
   import DragDropList from './DragDropList.svelte';
   import type { BaseQuestion } from '../quiz';
 
-  let { question = $bindable(), ...props } = $props()
+  let { question = $bindable() } = $props()
 </script>
 
 

@@ -128,6 +128,10 @@
         }
     }
 
+    function onViewReady() {
+        updateUIState();
+    }
+
     // Modified dispatch stats to handle validation results
     const dispatchHook = (eventType: string, details: object | undefined = undefined) => {
         const eventDetails = {
@@ -173,7 +177,7 @@
             node.style.minHeight = `${minHeight}px`;
             //dispatchStats();
 
-            
+
         }
     });
 
@@ -191,7 +195,7 @@
         <Loading update={reloaded} ms={800} {minHeight}>
             <Container>
                 <SmoothResize {minHeight}>
-                    <Animated update={currentIndex}>
+                    <Animated update={currentIndex}  on:viewready={onViewReady}>
                         {#if showingResults}
                             <ResultsView {quiz} />
                         {:else if currentQuestion}

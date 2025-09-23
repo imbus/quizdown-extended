@@ -1,6 +1,37 @@
 import { createHighlighterCore, type HighlighterCore } from '@shikijs/core';
 import { createOnigurumaEngine } from '@shikijs/engine-oniguruma';
-import { getShadowRoot } from './shadowRootManager';
+import { getShadowRoots } from './shadowRootManager';
+
+
+/**
+ * Load the default export of a small ESM/CJS snippet (string) without using dynamic import.
+ * This avoids Webpack's "Critical dependency: the request of a dependency is an expression" warning
+ * in downstream apps (e.g., Docusaurus) while still supporting URL-based loaders.
+ */
+function loadDefaultFromSource(jsText: string): any {
+  // Try ESM: transform `export default X` into `return X`
+  if (/\bexport\s+default\b/.test(jsText)) {
+    const body = jsText.replace(/\bexport\s+default\b/, 'return ');
+    // Execute in a fresh function scope
+    return new Function(body)();
+  }
+  // Try CommonJS: `module.exports = X` or `exports.default = X`
+  if (/module\.exports\s*=/.test(jsText)) {
+    const match = jsText.match(/module\.exports\s*=\s*([\s\S]*?);?\s*$/);
+    if (match) {
+      return new Function('return (' + match[1] + ')')();
+    }
+  }
+  if (/exports\.default\s*=/.test(jsText)) {
+    const match = jsText.match(/exports\.default\s*=\s*([\s\S]*?);?\s*$/);
+    if (match) {
+      return new Function('return (' + match[1] + ')')();
+    }
+  }
+  // As a last resort, attempt to eval and look for a `default` global this assigns
+  // (not expected for Shiki themes/languages).
+  return new Function(jsText)();
+}
 
 let globalHighlighter: HighlighterCore | null = null;
 let initializationPromise: Promise<HighlighterCore> | null = null;
@@ -11,7 +42,7 @@ type ThemeEntry = {
 }
 
 // Set to keep track of loaded URLs
-const loadedThemes = new Map<string, ThemeEntry>();
+const loadedThemes = new Map<'light' | 'dark', ThemeEntry>();
 const loadedLanguages = new Set<string>();
 
 
@@ -72,8 +103,7 @@ export async function registerTheme(
       const res = await fetch(url);
       const jsText = await res.text();
       const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
-      const themeModule = await import(/* @vite-ignore */ blobUrl);
-      theme = themeModule.default || themeModule;
+      const theme = loadDefaultFromSource(jsText);
     } else {
       // Direct theme object
       theme = third;
@@ -120,8 +150,7 @@ export async function registerLanguage(
       const res = await fetch(arg);
       const jsText = await res.text();
       const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
-      const langModule = await import(/* @vite-ignore */ blobUrl);
-      language = langModule.default || langModule;
+      language = loadDefaultFromSource(jsText);
       key = arg;
     } else {
       // Direct language object
@@ -150,20 +179,7 @@ export async function highlightAllCodeBlocks(
   themes: Map<"light" | "dark", ThemeEntry> = loadedThemes
 ): Promise<void> {
   const highlighter = await getHighlighterInstance();
-  const codeBlocks = getShadowRoot()?.querySelectorAll('code[class^="language-"]');
-
-  // Inject theme CSS into ShadowRoot once
-  if (root instanceof ShadowRoot && !root.querySelector(`style[data-shiki-theme="${theme}"]`)) {
-    const css = themeCssMap.get(themes);
-    if (css) {
-      const style = document.createElement('style');
-      style.setAttribute('data-shiki-theme', theme);
-      style.textContent = css;
-      root.appendChild(style);
-    } else {
-      console.warn(`No CSS found for theme. Make sure it was provided in registerTheme().`);
-    }
-  }
+  const codeBlocks = getShadowRoots().flatMap(root => Array.from(root.querySelectorAll('code[class^="language-"]')));
 
   for (const code of Array.from(codeBlocks)) {
     const langClass = Array.from(code.classList).find(cls => cls.startsWith('language-'));
@@ -174,8 +190,8 @@ export async function highlightAllCodeBlocks(
       const html = await highlighter.codeToHtml(code.textContent, {
         lang,
         themes: {
-          light: themes.get("light").name,
-          dark: themes.get("dark").name
+          light: themes.get("light")?.name,
+          dark: themes.get("dark")?.name
         },
         defaultColor: 'light-dark()',
       });
@@ -193,4 +209,3 @@ export async function highlightAllCodeBlocks(
     }
   }
 }
-

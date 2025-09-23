@@ -6,10 +6,10 @@ const shadowRootMap = new Map<string, ShadowRoot>();
 /**
  * Creates or clears a ShadowRoot on the given node and tracks it by ID.
  */
-export function createShadowRoot(node: Element, shadowRootId: string = defaultShadowRootId): ShadowRoot {
-    if (shadowRootMap.has(shadowRootId)) {
-        console.error(`ShadowRoot with ID "${shadowRootId}" already created`);
-        return shadowRootMap.get(shadowRootId)!;
+export function createShadowRoot(node: Element): ShadowRoot {
+    if (shadowRootMap.has(node.id)) {
+        console.error(`ShadowRoot in node with ID "${node.id}" already exists.`);
+        return shadowRootMap.get(node.id)!;
     }
 
     // Clear the node's content before attaching shadow DOM
@@ -23,17 +23,17 @@ export function createShadowRoot(node: Element, shadowRootId: string = defaultSh
         root = node.attachShadow({ mode: 'open' });
     }
 
-    shadowRootMap.set(shadowRootId, root);
+    shadowRootMap.set(node.id, root);
     return root;
 }
 
 /**
  * Retrieves a previously created ShadowRoot by its ID.
  */
-export function getShadowRoot(shadowRootId: string = defaultShadowRootId): ShadowRoot | undefined {
-    if (!shadowRootMap.has(shadowRootId)) {
-        console.error(`ShadowRoot with ID "${shadowRootId}" wasn't created before`);
-        return undefined;
+export function getShadowRoots(): Array<ShadowRoot> {
+    if (shadowRootMap.size === 0) {
+        console.error(`No ShadowRoots have been created.`);
+        return [];
     }
-    return shadowRootMap.get(shadowRootId);
+    return Array.from(shadowRootMap.values());
 }

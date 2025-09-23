@@ -51,6 +51,7 @@ export class Config {
         this.customFailMsg = get(options['customFailMsg'], 'You have not passed');
         this.locale = get(options['locale'], null);
         this.enableRetry = get(options['enableRetry'],true);
+        this.buttonColor = get(options['buttonColor'], 'steelblue');
     }
 }
 

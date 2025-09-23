@@ -12,8 +12,8 @@
 
     let { minHeight = 0, children }: Props = $props();
 
-    let innerHeight: number = $state();
-    const height = tweened(innerHeight, {
+    let innerHeight: number = $state(0);
+    const height = tweened(0, {
         duration: 100,
     });
     let mounted = $state(false);
