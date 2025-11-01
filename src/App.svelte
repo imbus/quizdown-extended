@@ -385,4 +385,26 @@
         background: var(--quizdown-color-code-bg) !important;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
     }
+
+    p.explanation table {
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    color: var(--ifm-font-color-base, inherit);
+    }
+
+    p.explanation th,
+    td {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    }
+
+    /* subtle row separators */
+    p.explanation tr + tr td {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* thicker line under header */
+    p.explanation thead tr:last-child th {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+    }
 </style>

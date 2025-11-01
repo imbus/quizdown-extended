@@ -20,8 +20,9 @@ function parseQuizdown(rawQuizdown: string, globalConfig: Config): Quiz {
     if (hasQuizOptions(tokens)) {
         quizConfig = parseOptions(tokens, quizConfig);
     }
-    let firstHeadingIdx = findFirstHeadingIdx(tokens);
-    let questions = extractQuestions(tokens.slice(firstHeadingIdx), quizConfig);
+    let firstHeadingIdx = findFirstHeadingIdx(tokens, 0);
+    const firstHeadingDepth = tokens[firstHeadingIdx]?.depth || 0;
+    let questions = extractQuestions(tokens.slice(firstHeadingIdx), quizConfig, firstHeadingDepth);
     return new Quiz(questions, quizConfig);
 }
 
@@ -45,12 +46,12 @@ function parseOptions(tokens: marked.Token[], quizConfig: Config): Config {
     return mergeAttributes(quizConfig, options['data']);
 }
 
-function extractQuestions(tokens: marked.Token[], config: Config) {
+function extractQuestions(tokens: marked.Token[], config: Config, headingDepth = 0): BaseQuestion[] {
     let questions: BaseQuestion[] = [];
     let nextQuestion = 0;
 
     while (tokens.length !== 0) {
-        nextQuestion = findFirstHeadingIdx(tokens.slice(1));
+        nextQuestion = findFirstHeadingIdx(tokens.slice(1), headingDepth);
         if (nextQuestion === -1) {
             // no next question on last question
             nextQuestion = tokens.length;
@@ -65,12 +66,12 @@ function extractQuestions(tokens: marked.Token[], config: Config) {
 }
 
 function parseQuestion(tokens: marked.Token[], config: Config): BaseQuestion {
-    let explanation = parseExplanation(tokens);
+    let heading = parseHeading([tokens[0]]);
+    let explanation = parseExplanation(tokens.slice(1));
     let hint = parseHint(tokens);
-    let heading = parseHeading(tokens);
     let answers = parseAnswers(tokens);
-    let questionType = determineQuestionType(tokens);
     let questionConfig = new Config(config);
+    let questionType = determineQuestionType(tokens);
     const args = [heading, explanation, hint, answers, questionConfig] as const;
     switch (questionType) {
         case 'SingleChoice':
@@ -82,8 +83,11 @@ function parseQuestion(tokens: marked.Token[], config: Config): BaseQuestion {
     }
 }
 
-function findFirstHeadingIdx(tokens: marked.Token[]): number {
-    return tokens.findIndex((token) => token['type'] == 'heading');
+function findFirstHeadingIdx(tokens: marked.Token[], headingDepth: number): number {
+    if (headingDepth === 0) {
+        return tokens.findIndex((token) => token['type'] == 'heading');
+    }
+    return tokens.findIndex((token) => token['type'] == 'heading' && token['depth'] === headingDepth);
 }
 
 function parseHint(tokens: marked.Token[]): string {
@@ -94,9 +98,12 @@ function parseHint(tokens: marked.Token[]): string {
 
 function parseExplanation(tokens: marked.Token[]): string {
     let explanations = tokens.filter(
-        (token) => token['type'] == 'paragraph' || token['type'] == 'code'
+        (token) => token['type'] == 'paragraph' || token['type'] == 'code' || token['type'] == 'heading' || token['type'] == 'table'
     );
-    return parseTokens(explanations);
+    const parsedTokens = explanations.map(token => {
+        return token.type === 'heading' ? `<h${token.depth}>${parseTokens([token])}</h${token.depth}>` : `<p>${parseTokens([token])}</p>`;
+    }).join('');
+    return parsedTokens;
 }
 
 function parseHeading(tokens: marked.Token[]): string {

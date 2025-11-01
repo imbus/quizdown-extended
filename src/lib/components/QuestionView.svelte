@@ -36,7 +36,7 @@
 </h3>
 
 {#if question.explanation}
-    <p>
+    <p class="explanation">
         {#if typeof question.explanation === 'string'}
             {@html question.explanation}
         {:else}
@@ -45,4 +45,6 @@
     </p>
 {/if}
 
+<!-- separator as <hr> -->
+<hr />
 <QuestionComponent bind:question={question} />
