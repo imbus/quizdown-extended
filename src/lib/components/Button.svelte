@@ -22,7 +22,7 @@
 
 <style>
     button {
-        color: var(--quizdown-color-button);
+        /* color: var(--quizdown-color-button); */
         background: none;
         border: 0;
         cursor: pointer;
@@ -35,7 +35,7 @@
     }
 
     button:hover {
-        background-color: rgba(0, 0, 0, 0.04);
+        background-color: var(--quizdown-color-button);
     }
 
     button:disabled {

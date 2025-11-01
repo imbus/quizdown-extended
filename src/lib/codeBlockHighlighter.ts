@@ -102,8 +102,7 @@ export async function registerTheme(
       url = third;
       const res = await fetch(url);
       const jsText = await res.text();
-      const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
-      const theme = loadDefaultFromSource(jsText);
+      theme = loadDefaultFromSource(jsText);
     } else {
       // Direct theme object
       theme = third;
@@ -149,7 +148,6 @@ export async function registerLanguage(
 
       const res = await fetch(arg);
       const jsText = await res.text();
-      const blobUrl = URL.createObjectURL(new Blob([jsText], { type: 'application/javascript' }));
       language = loadDefaultFromSource(jsText);
       key = arg;
     } else {
@@ -171,15 +169,44 @@ export async function registerLanguage(
 }
 
 
+type HighlightOptions = {
+  includeDocument?: boolean;
+};
+
 /**
  * Highlight all code blocks
  */
 export async function highlightAllCodeBlocks(
   root: ShadowRoot | Document | HTMLElement = document,
-  themes: Map<"light" | "dark", ThemeEntry> = loadedThemes
+  themes: Map<'light' | 'dark', ThemeEntry> = loadedThemes,
+  options: HighlightOptions = {}
 ): Promise<void> {
   const highlighter = await getHighlighterInstance();
-  const codeBlocks = getShadowRoots().flatMap(root => Array.from(root.querySelectorAll('code[class^="language-"]')));
+  const includeDocument = options.includeDocument ?? root === document;
+
+  const roots = new Set<ShadowRoot | Document | HTMLElement>();
+  const addRoot = (
+    candidate: ShadowRoot | Document | HTMLElement | null | undefined
+  ) => {
+    if (!candidate || typeof candidate.querySelectorAll !== 'function') {
+      return;
+    }
+    roots.add(candidate);
+  };
+
+  addRoot(root);
+  if (includeDocument && typeof document !== 'undefined') {
+    addRoot(document);
+  }
+  for (const shadowRoot of getShadowRoots()) {
+    addRoot(shadowRoot);
+  }
+
+  const codeBlocks = Array.from(roots).flatMap((ctx) =>
+    Array.from(
+      ctx.querySelectorAll<HTMLElement>('code[class^="language-"]')
+    )
+  );
 
   for (const code of Array.from(codeBlocks)) {
     const langClass = Array.from(code.classList).find(cls => cls.startsWith('language-'));

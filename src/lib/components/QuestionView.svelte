@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { BaseQuestion, QuestionType } from '../types';
+    import type { BaseQuestion, QuestionType } from '../../quiz';
     import type { SvelteComponent } from 'svelte';
 
     import SequenceView from './SequenceView.svelte';
@@ -26,7 +26,7 @@
 </script>
 
 <h3>
-    {$_('questionLetter')}{n}: 
+    {$_('questionLetter')}{n}:
     <!-- Only use @html if question.text is actually HTML, otherwise just display the text -->
     {#if typeof question.text === 'string'}
         {@html question.text}

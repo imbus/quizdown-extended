@@ -1,28 +1,28 @@
 <script lang="ts">
-    import type { BaseQuestion } from '../types';
-    
+    import type { BaseQuestion } from '../../quiz';
+
     interface Props {
         question: BaseQuestion;
     }
 
     let { question = $bindable() }: Props = $props();
-    
+
     // Local state for selections
     let selectedMultiple = $state([]);
     let selectedSingle = $state(-1);
-    
+
     // Initialize selections from question
     $effect(() => {
         if (question) {
             if (question.questionType === 'MultipleChoice') {
                 selectedMultiple = Array.isArray(question.selected) ? [...question.selected] : [];
             } else {
-                selectedSingle = Array.isArray(question.selected) && question.selected[0] !== undefined ? 
+                selectedSingle = Array.isArray(question.selected) && question.selected[0] !== undefined ?
                     question.selected[0] : -1;
             }
         }
     });
-    
+
     // Update question's selected property when local state changes
     $effect(() => {
         if (question) {
@@ -35,17 +35,17 @@
             }
         }
     });
-    
+
     // Function to safely get answer HTML content
     function getAnswerHtml(answer) {
         if (!answer) return '';
-        
+
         // If answer is a string, return it directly
         if (typeof answer === 'string') return answer;
-        
+
         // If answer has an html property that's a string, return that
         if (answer.html && typeof answer.html === 'string') return answer.html;
-        
+
         // If answer is an object, try to stringify it
         if (typeof answer === 'object') {
             try {
@@ -54,7 +54,7 @@
                 return 'Error displaying answer';
             }
         }
-        
+
         // Fallback
         return String(answer);
     }
@@ -110,7 +110,7 @@
     }
 
     [type='checkbox'] + span {
-        border-radius: 2px;
+        border-radius: 4px;
     }
 
     [type='checkbox'] + span,
@@ -120,7 +120,7 @@
         color: var(--quizdown-color-text);
         display: block;
         padding: 0.5rem;
-        margin: 5px;
+        margin: 7px;
         border: 3px solid transparent;
         cursor: pointer;
     }

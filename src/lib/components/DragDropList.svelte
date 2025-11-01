@@ -75,7 +75,7 @@
 	}
 	.list-item.dragging {
 		opacity: 0.5;
-		box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+		box-shadow: 0 4px 8px var(--quizdown-color-shadow);
 	}
 	.list-item.dragover {
 		background-color: #e0f7fa;

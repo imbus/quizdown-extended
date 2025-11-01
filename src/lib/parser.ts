@@ -87,8 +87,9 @@ function findFirstHeadingIdx(tokens: marked.Token[]): number {
 }
 
 function parseHint(tokens: marked.Token[]): string {
-    let blockquotes = tokens.filter((token) => token['type'] == 'blockquote');
-    return parseTokens(blockquotes);
+    let hintTokens = tokens.filter((token) => token['type'] == 'blockquote'); //?.[0]?.tokens;
+    let parsedHint = parseTokens(hintTokens);
+    return parsedHint;
 }
 
 function parseExplanation(tokens: marked.Token[]): string {
@@ -118,9 +119,9 @@ function parseAnswers(tokens: marked.Token[]): Array<Answer> {
 }
 
 function parseAnswer(item: marked.Tokens.ListItem) {
-    let comments = item['tokens'].filter((token) => token.type == 'blockquote');
+    let commentTokens = item['tokens'].filter((token) => token.type == 'blockquote'); //?.[0]?.tokens;
     let texts = item['tokens'].filter((token) => token.type != 'blockquote');
-    return { text: parseTokens(texts), comment: parseTokens(comments) };
+    return { text: parseTokens(texts), comment: parseTokens(commentTokens) };
 }
 
 function determineQuestionType(tokens: marked.Token[]): QuestionType {
@@ -140,27 +141,30 @@ function determineQuestionType(tokens: marked.Token[]): QuestionType {
 
 // This is the key function that needs to be fixed
 function parseTokens(tokens: marked.Token[]): string {
+    // return DOMPurify.sanitize(marked.parser(tokens as marked.TokensList));
+
     if (!Array.isArray(tokens) || tokens.length === 0) {
         return '';
     }
-    
+
     // Create a clone of the tokens array with a new 'links' property
     // This avoids modifying the original tokens array which might cause side effects
     const tokensWithLinks = [...tokens];
     // @ts-ignore
     tokensWithLinks.links = {};
-    
+
     try {
         // Get the raw HTML output directly instead of using marked.parser
         // This skips the internal object representation that might be causing issues
         let html = '';
-        
+
         // Method 1: Try using marked.parser directly but with toString to force string conversion
         const parsedResult = marked.parser(tokensWithLinks as marked.TokensList);
         html = String(parsedResult);
-        
+
         // If the result is still [object Object], try alternative approaches
         if (html === '[object Object]') {
+            console.error('marked.parser returned [object Object], trying alternative parsing methods.');
             // Method 2: Process each token individually and combine the results
             html = tokens.map(token => {
                 // Extract text content from different token types
@@ -178,24 +182,32 @@ function parseTokens(tokens: marked.Token[]): string {
                 } else if (token.type === 'list' && Array.isArray(token.items)) {
                     const listItems = token.items.map(item => `<li>${item.text || ''}</li>`).join('');
                     return token.ordered ? `<ol>${listItems}</ol>` : `<ul>${listItems}</ul>`;
+                } else if (token.type === 'codespan' && token.text) {
+                    return `<code>${token.text}</code>`;
+                } else if (token.type === 'em' && token.text) {
+                    return `<em>${token.text}</em>`;
+                } else if (token.type === 'strong' && token.text) {
+                    return `<strong>${token.text}</strong>`;
+                } else if (token.type === 'space') {
+                    return '<br />';
                 } else if (token.raw) {
                     return token.raw;
                 }
                 return '';
             }).join('');
         }
-        
+
         return DOMPurify.sanitize(html);
     } catch (error) {
         console.error('Error parsing tokens:', error);
-        
+
         // Fallback: extract text content directly from tokens
         const textContent = tokens.map(token => {
             if (token.text) return token.text;
             if (token.raw) return token.raw;
             return '';
         }).join(' ');
-        
+
         return DOMPurify.sanitize(textContent);
     }
 }

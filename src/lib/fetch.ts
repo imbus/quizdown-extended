@@ -15,7 +15,7 @@ function fetch(
       reject(new Error(`Request timed out after ${timeout}ms`));
     }, timeout);
 
-    fetch(url, { signal: controller.signal })
+    globalThis.fetch(url, { signal: controller.signal })
       .then((response) => {
         clearTimeout(id);
         if (!response.ok) {

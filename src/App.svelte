@@ -19,6 +19,14 @@
     import Container from './lib/components/Container.svelte';
     import Loading from './lib/components/Loading.svelte';
 
+    // Import SVG icons as URLs
+    import lightbulbIcon from './assets/symbols/lightbulb2.svg?raw';
+    import prevIcon from './assets/symbols/arrow_back.svg?raw';
+    import nextIcon from './assets/symbols/arrow_forward.svg?raw';
+    import passIcon from './assets/symbols/pass.svg?raw';
+    import assignment_turned_in from './assets/symbols/assignment_turned_in.svg?raw';
+    import replayIcon from './assets/symbols/replay.svg?raw';
+
     interface Props {
         quiz: Quiz;
     }
@@ -111,7 +119,6 @@
             reloaded = !reloaded;
             if (quiz.reset()) {
                 evaluationDone = false;
-
                 dispatchHook("onQuizReset");
                 updateUIState();
             }
@@ -121,11 +128,31 @@
     }
 
     function showHint() {
-        if (currentQuestion) {
-            currentQuestion.enableHint();
-            currentHintShown = true;
-            dispatchHook("onShowHint");
+        if (!currentQuestion?.hint || !currentQuestion.showHint) {
+            return;
         }
+
+        const hintStore = currentQuestion.showHint;
+        const currentValue = get(hintStore);
+        const nextValue = !currentValue;
+        const setHint = (hintStore as { set?: (value: boolean) => void }).set;
+
+        if (nextValue) {
+            currentQuestion.enableHint?.();
+        } else {
+            currentQuestion.disableHint?.();
+        }
+
+        if (typeof setHint === 'function') {
+            setHint.call(hintStore, nextValue);
+        }
+
+        currentHintShown = nextValue;
+        dispatchHook(nextValue ? 'onShowHint' : 'onHideHint');
+    }
+
+    function onShowHint() {
+        updateUIState();
     }
 
     function onViewReady() {
@@ -169,13 +196,21 @@
 
             node.style.setProperty('--quizdown-color-button', buttonColor);
             node.style.setProperty('--quizdown-color-primary', primaryColor);
-            node.style.setProperty(
-                '--quizdown-color-secondary',
-                secondaryColor
-            );
+            node.style.setProperty('--quizdown-color-secondary', secondaryColor);
             node.style.setProperty('--quizdown-color-text', textColor);
+            node.style.setProperty('--quizdown-color-background', quiz.config.backgroundColor);
+            node.style.setProperty('--quizdown-color-hint', quiz.config.hintSymbolColor);
+            node.style.setProperty('--quizdown-color-hint-bg', quiz.config.hintBgColor);
+            node.style.setProperty('--quizdown-color-pass', quiz.config.passSymbolColor);
+            node.style.setProperty('--quizdown-color-pass-bg', quiz.config.passBgColor);
+            node.style.setProperty('--quizdown-color-fail', quiz.config.failSymbolColor);
+            node.style.setProperty('--quizdown-color-fail-bg', quiz.config.failBgColor);
+            node.style.setProperty('--quizdown-color-info', quiz.config.infoSymbolColor);
+            node.style.setProperty('--quizdown-color-submit', quiz.config.submitSymbolColor);
+            node.style.setProperty('--quizdown-color-shadow', quiz.config.shadowColor);
+            node.style.setProperty('--quizdown-color-code-bg', quiz.config.codeBgColor);
             node.style.minHeight = `${minHeight}px`;
-            //dispatchStats();
+            // dispatchStats();
 
 
         }
@@ -206,6 +241,7 @@
                             <Hint
                                 hint={currentQuestion.hint}
                                 show={currentHintShown}
+                                hide={!currentHintShown}
                             />
                         {/if}
                     </Animated>
@@ -217,9 +253,8 @@
                             btnClass="quizControlButton hintButton"
                             title={$_('hint')}
                             disabled={!currentQuestion?.hint ||
-                                currentHintShown ||
                                 showingResults}
-                            buttonAction={showHint}>💡</Button
+                            buttonAction={showHint}><span alt="hint" class="button-icon svg-wrap" >{@html lightbulbIcon}</span></Button
                         >
                     {/snippet}
                     {#snippet center()}
@@ -229,7 +264,7 @@
                             disabled={isFirst ||
                                 showingResults ||
                                 evaluationDone}
-                            buttonAction={goToPrevious}>⬅</Button
+                            buttonAction={goToPrevious}><span alt="previous" class="button-icon svg-wrap" >{@html prevIcon}</span></Button
                         >
 
                         <Button
@@ -238,7 +273,7 @@
                                 showingResults ||
                                 evaluationDone}
                             buttonAction={goToNext}
-                            title={$_('next')}>⮕</Button
+                            title={$_('next')}><span alt="next" class="button-icon svg-wrap" >{@html nextIcon}</span></Button
                         >
 
                         {#if isLast || allQuestionsVisited}
@@ -251,7 +286,7 @@
                                     title={$_('evaluate')}
                                     buttonAction={showResults}
                                 >
-                                    ✅
+                                    <span alt="evaluate" class="button-icon svg-wrap" >{@html assignment_turned_in}</span>
                                 </Button>
                             </div>
                         {/if}
@@ -262,8 +297,7 @@
                                 title={$_('reset')}
                                 buttonAction={resetQuiz}
                                 btnClass="quizControlButton retryButton"
-                                >↻</Button
-                            >
+                                ><span alt="reset" class="button-icon svg-wrap" >{@html replayIcon}</span></Button>
                         {/if}
                     {/snippet}
                 </Row>
@@ -275,27 +309,6 @@
 </div>
 
 <style global lang="scss">
-    img {
-        max-height: 400px;
-        border-radius: 4px;
-        max-width: 100%;
-        height: auto;
-    }
-
-    code {
-        padding: 0 0.4rem;
-        font-size: 85%;
-        color: #333;
-        white-space: pre-wrap;
-        border-radius: 4px;
-        padding: 0.2em 0.4em;
-        background-color: #f8f8f8;
-        font-family: Consolas, Monaco, monospace;
-    }
-
-    a {
-        color: var(--quizdown-color-primary);
-    }
 
     .quizdown-content {
         padding: 1rem;
@@ -303,7 +316,44 @@
         margin: auto;
     }
 
-    .quizControlButton {
-        color: blue;
+    .svg-wrap :where(path, circle, rect, polygon) {
+        fill: currentColor !important;
+    }
+
+    :global(.button-icon) {
+        width: 24px;
+        height: 24px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    /* Icon color overrides using CSS variables */
+    :global(.hintButton .button-icon) {
+        color: var(--quizdown-color-hint);
+    }
+
+    :global(.previousButton .button-icon) {
+        color: var(--quizdown-color-primary);
+    }
+
+    :global(.nextButton .button-icon) {
+        color: var(--quizdown-color-primary);
+    }
+
+    :global(.checkResultsButton .button-icon) {
+        color: var(--quizdown-color-submit);
+    }
+
+    :global(.retryButton .button-icon) {
+        color: var(--quizdown-color-primary);
+    }
+
+    pre.shiki {
+        border-radius: 0.4rem !important;
+        font-family: monospace !important;
+        vertical-align: middle;
+        padding: 0.5rem;
+        background: var(--quizdown-color-code-bg) !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
     }
 </style>

@@ -22,7 +22,7 @@
 
 <style>
     .row {
-        padding-top: 2em;
+        padding-top: 1em;
         display: flex;
     }
 

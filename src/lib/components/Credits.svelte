@@ -16,7 +16,6 @@
     }
 
     .credits {
-        margin-top: 1rem;
         font-size: small;
         text-align: end;
         color: lightgray;

@@ -17,8 +17,8 @@ let markedExtension = {
         let idx: number = src.match(/(\$){1,2}/)?.index;
         return idx;
     },
-    tokenizer(src): KatexToken | undefined {
-        const match = rule.exec(src);
+    tokenizer(src: string): KatexToken | undefined {
+        const match: RegExpExecArray | null = rule.exec(src);
         if (match) {
             return {
                 type: 'katex',

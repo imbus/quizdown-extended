@@ -4,7 +4,7 @@ import parseQuizdown from './lib/parser.js';
 import { Config } from './lib/config.js';
 import marked from './lib/customizedMarked.js';
 import type { Quiz } from './quiz';
-import { createShadowRoot } from './lib/shadowRootManager';
+import { createShadowRoot, type ShadowRootOptions } from './lib/shadowRootManager';
 import type { HighlighterCore } from 'shiki';
 import { getHighlighterInstance, registerLanguage, registerTheme } from './lib/codeBlockHighlighter';
 import { QuizdownHooks } from './quizdownHooks';
@@ -36,7 +36,12 @@ class Quizdown implements IQuizdown {
     }
 
     createApp(rawQuizdown: string, node: Element, config: Config): App | void {
-        const root = createShadowRoot(node);
+        const root = createShadowRoot(node, {
+            fontFamily: config.fontFamily,
+            fontFamilyHeading: config.fontFamilyHeading,
+            fontUrl: config.fontUrl,
+            customStyles: config.customStyles
+        });
 
         try {
             const quiz = this.parseQuizdown(rawQuizdown, config);

@@ -8,7 +8,8 @@
 
 <style>
     .card {
-        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 8px 0 var(--quizdown-color-shadow);
+        background-color: var(--quizdown-color-background);
         border-radius: 0 0 4px 4px;
     }
 </style>
