@@ -8,8 +8,8 @@
     let { question = $bindable() }: Props = $props();
 
     // Local state for selections
-    let selectedMultiple = $state([]);
-    let selectedSingle = $state(-1);
+    let selectedMultiple = $state<number[]>([]);
+    let selectedSingle = $state<number>(-1);
 
     // Initialize selections from question
     $effect(() => {
@@ -37,14 +37,17 @@
     });
 
     // Function to safely get answer HTML content
-    function getAnswerHtml(answer) {
+    function getAnswerHtml(answer: string | { html: string } | Record<string, unknown>): string {
         if (!answer) return '';
 
         // If answer is a string, return it directly
         if (typeof answer === 'string') return answer;
 
         // If answer has an html property that's a string, return that
-        if (answer.html && typeof answer.html === 'string') return answer.html;
+        if (answer !== null && 'html' in answer) {
+            const html = (answer as { html?: unknown }).html;
+            if (typeof html === 'string') return html;
+        }
 
         // If answer is an object, try to stringify it
         if (typeof answer === 'object') {
@@ -97,6 +100,7 @@
 <style>
     fieldset {
         border: 0;
+        display: contents;
     }
 
     [type='checkbox'],

@@ -217,22 +217,38 @@ export async function highlightAllCodeBlocks(
       const html = await highlighter.codeToHtml(code.textContent, {
         lang,
         themes: {
-          light: themes.get("light")?.name,
-          dark: themes.get("dark")?.name
+          light: themes.get('light')?.name,
+          dark: themes.get('dark')?.name
         },
         defaultColor: 'light-dark()',
       });
+
+      // Parse the returned HTML
       const container = document.createElement('div');
       container.innerHTML = html;
-      const pre = container.querySelector('pre');
-      const innerCode = pre?.querySelector('code');
 
-      if (pre && innerCode && code.parentNode) {
-        pre.innerHTML = innerCode.innerHTML;
-        code.parentNode.replaceChild(pre, code);
+      // Shiki always returns <pre class="shiki ..."><code>...</code></pre>
+      const shikiPre = container.querySelector('pre.shiki') as HTMLPreElement | null;
+      if (!shikiPre) continue;
+
+      // Make each code block horizontally scrollable (no wrapping)
+      shikiPre.style.maxWidth = '100%';
+      shikiPre.style.overflowX = 'auto';
+      shikiPre.style.overflowY = 'visible';
+      shikiPre.style.whiteSpace = 'pre';
+      shikiPre.tabIndex = 0; // keep keyboard scrollability
+
+      // If original code lived inside a <pre>, replace THAT <pre> (prevents <pre><pre> nesting)
+      const originalPre = code.closest('pre');
+      if (originalPre && originalPre.parentNode) {
+        originalPre.replaceWith(shikiPre);
+      } else if (code.parentNode) {
+        // Fallback: no <pre> wrapper; just replace the <code> node
+        code.parentNode.replaceChild(shikiPre, code);
       }
     } catch (err) {
       console.error(`Error highlighting code block (lang: ${lang}):`, err);
     }
   }
+
 }

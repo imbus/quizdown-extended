@@ -8,7 +8,7 @@
 
     let { ms, minHeight = 0, update = false, children }: Props = $props();
 
-    let node: HTMLElement = $state();
+    let node: HTMLElement | undefined = $state();
 
     async function wait(ms: number) {
         await new Promise((resolve) => setTimeout(resolve, ms));

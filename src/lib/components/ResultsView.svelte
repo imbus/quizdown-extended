@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Quiz } from '../quiz';
+    import type { Quiz } from '../../quiz';
     import { _ } from 'svelte-i18n';
     import { fade } from 'svelte/transition';
     import Button from './Button.svelte';
@@ -66,7 +66,7 @@
 
 </script>
 
-<div>
+<div class="results-view">
     <h2>{$_('quizResults')}</h2>
     <p>
         {$_('scoreText', { values: { score, total: quiz.questions.length } })}
@@ -86,9 +86,9 @@
                     <td class="id-column">{i + 1}.</td>
                     <td>
                         {#if question.isCorrect()}
-                            <span alt="Correct" class="svg-wrap status-icon status-pass" >{@html passIcon}</span>
+                            <span class="svg-wrap status-icon status-pass" >{@html passIcon}</span>
                         {:else}
-                            <span alt="Incorrect" class="svg-wrap status-icon status-fail" >{@html failIcon}</span>
+                            <span class="svg-wrap status-icon status-fail" >{@html failIcon}</span>
                         {/if}
                     </td>
                     <td>
@@ -98,8 +98,7 @@
                                 <Button
                                     btnClass="quizControlButton"
                                     buttonAction={() => toggleExplanation(i)}
-                                    aria-label="Toggle explanation"
-                                    title="Show explanation"
+                                    title="Toggle explanation"
                                 >
                                     <span class="svg-wrap status-icon status-info-small explain-icon">{@html infoIcon}</span>
                                 </Button>
@@ -127,10 +126,10 @@
                                             <div class="answer-header">
                                                 <span class="answer-status">
                                                     {#if answer.correct}
-                                                        <span alt="Correct" class="svg-wrap answer-status-icon status-pass" >{@html passIcon}</span>
+                                                        <span class="svg-wrap answer-status-icon status-pass" >{@html passIcon}</span>
                                                         Correct
                                                     {:else}
-                                                        <span alt="Incorrect" class="svg-wrap answer-status-icon status-fail" >{@html failIcon}</span>
+                                                        <span class="svg-wrap answer-status-icon status-fail" >{@html failIcon}</span>
                                                         Incorrect
                                                     {/if}
                                                 </span>
@@ -157,6 +156,10 @@
 </div>
 
 <style>
+    .results-view {
+        overflow-x: auto;
+    }
+
     table.questions-review {
         width: 100%;
         border-collapse: collapse;
@@ -172,10 +175,10 @@
     /* table.questions-review td:hover {
         filter: opacity(0.8);
     } */
-
+    /*
     .id-column {
         width: 60px;
-    }
+    } */
 
     .question-cell {
         display: flex;

@@ -38,7 +38,8 @@
 
     registerLanguages(quiz.config.locale);
 
-    let node: HTMLElement = $state();
+    let node: HTMLElement | undefined = $state();
+    let progressBarNode: HTMLElement | null | undefined = $state();
     let minHeight = 150;
     let reloaded = $state(false);
 
@@ -83,6 +84,7 @@
             if (quiz.next()) {
                 updateUIState();
                 dispatchHook("onQuizQuestionChange", {direction: "forward" });
+                void scrollToProgressBar();
             }
         } catch (err) {
             console.error('Navigation error:', err);
@@ -94,6 +96,7 @@
             if (quiz.previous()) {
                 updateUIState();
                 dispatchHook("onQuizQuestionChange", {direction: "backward" });
+                void scrollToProgressBar();
             }
         } catch (err) {
             console.error('Navigation error:', err);
@@ -108,6 +111,7 @@
 
                 dispatchHook("onShowResults", quiz.getStats());
                 updateUIState();
+                void scrollToProgressBar();
             }
         } catch (err) {
             console.error('Show results error:', err);
@@ -121,6 +125,7 @@
                 evaluationDone = false;
                 dispatchHook("onQuizReset");
                 updateUIState();
+                void scrollToProgressBar();
             }
         } catch (err) {
             console.error('Reset error:', err);
@@ -139,8 +144,6 @@
 
         if (nextValue) {
             currentQuestion.enableHint?.();
-        } else {
-            currentQuestion.disableHint?.();
         }
 
         if (typeof setHint === 'function') {
@@ -180,6 +183,30 @@
             console.error('Event dispatch error:', err);
         }
     };
+
+    function getStickyHeaderOffset(): number {
+        if (typeof window === 'undefined') {
+            return 0;
+        }
+        const selectors = [
+            'nav.theme-layout-navbar.navbar--fixed-top',
+            'nav[aria-label="Main"].navbar--fixed-top',
+            '.navbar--fixed-top'
+        ];
+        const header = selectors
+            .map((selector) => document.querySelector<HTMLElement>(selector))
+            .find((el): el is HTMLElement => Boolean(el));
+        return header?.offsetHeight ?? 0;
+    }
+
+    async function scrollToProgressBar() {
+        if (typeof window === 'undefined' || !progressBarNode) {
+            return;
+        }
+        await tick();
+        const targetTop = window.scrollY + progressBarNode.getBoundingClientRect().top - getStickyHeaderOffset() - 16;
+        window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' });
+    }
 
     // Initialize UI state
     $effect(() => {
@@ -226,7 +253,9 @@
 
 <div class="quizdown-content" bind:this={node}>
     <Card>
-        <ProgressBar value={currentIndex} max={quiz.questions.length - 1} />
+        <div bind:this={progressBarNode}>
+            <ProgressBar value={currentIndex} max={quiz.questions.length - 1} />
+        </div>
         <Loading update={reloaded} ms={800} {minHeight}>
             <Container>
                 <SmoothResize {minHeight}>
@@ -241,7 +270,6 @@
                             <Hint
                                 hint={currentQuestion.hint}
                                 show={currentHintShown}
-                                hide={!currentHintShown}
                             />
                         {/if}
                     </Animated>
@@ -254,7 +282,7 @@
                             title={$_('hint')}
                             disabled={!currentQuestion?.hint ||
                                 showingResults}
-                            buttonAction={showHint}><span alt="hint" class="button-icon svg-wrap" >{@html lightbulbIcon}</span></Button
+                            buttonAction={showHint}><span class="button-icon svg-wrap" >{@html lightbulbIcon}</span></Button
                         >
                     {/snippet}
                     {#snippet center()}
@@ -264,7 +292,7 @@
                             disabled={isFirst ||
                                 showingResults ||
                                 evaluationDone}
-                            buttonAction={goToPrevious}><span alt="previous" class="button-icon svg-wrap" >{@html prevIcon}</span></Button
+                            buttonAction={goToPrevious}><span class="button-icon svg-wrap" >{@html prevIcon}</span></Button
                         >
 
                         <Button
@@ -273,7 +301,7 @@
                                 showingResults ||
                                 evaluationDone}
                             buttonAction={goToNext}
-                            title={$_('next')}><span alt="next" class="button-icon svg-wrap" >{@html nextIcon}</span></Button
+                            title={$_('next')}><span class="button-icon svg-wrap" >{@html nextIcon}</span></Button
                         >
 
                         {#if isLast || allQuestionsVisited}
@@ -286,7 +314,7 @@
                                     title={$_('evaluate')}
                                     buttonAction={showResults}
                                 >
-                                    <span alt="evaluate" class="button-icon svg-wrap" >{@html assignment_turned_in}</span>
+                                    <span class="button-icon svg-wrap" >{@html assignment_turned_in}</span>
                                 </Button>
                             </div>
                         {/if}
@@ -297,7 +325,7 @@
                                 title={$_('reset')}
                                 buttonAction={resetQuiz}
                                 btnClass="quizControlButton retryButton"
-                                ><span alt="reset" class="button-icon svg-wrap" >{@html replayIcon}</span></Button>
+                                ><span class="button-icon svg-wrap" >{@html replayIcon}</span></Button>
                         {/if}
                     {/snippet}
                 </Row>
@@ -352,6 +380,7 @@
         border-radius: 0.4rem !important;
         font-family: monospace !important;
         vertical-align: middle;
+        -webkit-overflow-scrolling: touch;
         padding: 0.5rem;
         background: var(--quizdown-color-code-bg) !important;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);

@@ -14,6 +14,7 @@
 <button
     class={btnClass}
     title={title}
+    aria-label={title}
     disabled={disabled}
     onclick={() => buttonAction()}
 >

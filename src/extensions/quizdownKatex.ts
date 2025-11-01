@@ -13,7 +13,7 @@ const rule = RegExp(/^(\$+)([^\$]|[^\$][\s\S]*?[^\$])\1(?!\$)/);
 let markedExtension = {
     name: 'katex',
     level: 'inline',
-    start(src): number {
+    start(src: any): number {
         let idx: number = src.match(/(\$){1,2}/)?.index;
         return idx;
     },
